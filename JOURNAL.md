@@ -36,9 +36,27 @@ Cependant, si nous partons, plus tard, sur une interface web, FastAPI côté bac
 ### Adresse GitHub du projet
 [https://github.com/ThomasSanna/M1DE-Extracteur-Donnees-Formulaires](https://github.com/ThomasSanna/M1DE-Extracteur-Donnees-Formulaires)
 
+## Session 1.5 (02 Mars 2026) : Mise en place des Skills Copilot
+
+**Objectif** : Configurer des directives personnalisées (Skills) pour encadrer l'IA et garantir le respect des critères de notation du TP2.
+
+**Mise en place des Skills suivants** :
+- **`auto-journaling`** : M'aide à capturer systématiquement les moments critiques, les erreurs et les solutions pour remplir les 25 points dédiés au journal de bord.
+- **`mvp-rhythm`** : Garde le focus sur un produit minimal viable (MVP). Il m'empêche de m'égarer dans des architectures trop complexes pour une session de 6h (25 points sur la fonctionnalité/compréhension).
+- **`qualitative-code`** : Garantit une architecture propre, l'utilisation de patterns comme les ADR (Architecture Decision Records) et le respect des standards (PEP8), assurant les points de qualité du code.
+- **`rag-transparency`** : Prépare le questionnaire technique (25 points) en transformant l'IA en tuteur qui m'explique chaque choix LLM (Prompts, température, structured outputs).
+- **`robust-rag`** : Force la gestion des cas limites (entrées vides, JSON mal formé, erreurs API) pour éviter les crashs et garantir la robustesse (15 points).
+
+**Apprentissage clé** : 
+L'utilisation de "Skills" permet de transformer GitHub Copilot d'un simple générateur de code en un véritable coach méthodologique qui connaît les barèmes de l'examen et me force à rester rigoureux.
+
 ## Session 2 (03 Mars 2026)
 
+>IMPORTANT : Tous les prompts sont des "meta-prompts" : Écris par l'IA selon mes instructions.
+
 **Objectif de la session** : Implémentation technique complète du MVP (modèles, moteur d'extraction IA, validation et interface CLI) en suivant une approche modulaire et qualitative.
+
+### Étape 0 : Cadrage technique et définition des prompts d'extraction
 
 **Prompts significatifs** :
 ```
@@ -174,10 +192,6 @@ Commandes :
 **Solution trouvée** : Implémentation d'un résumé formaté en sortie de console avec mise en évidence des alertes (préfixes [ALERTE] et [SUCCÈS]).
 
 **Apprentissage clé** : Une CLI doit être autant pensée pour les scripts (export JSON) que pour les humains (affichage de résumé).
-
-## Session 3 (03 Mars 2026)
-
-**Objectif de la session** : 
 
 ### Étape 7 : Tests des cas limites et vérification
 **Objectif** : Valider la robustesse de l'extracteur face à des entrées dégradées ou inattendues.
