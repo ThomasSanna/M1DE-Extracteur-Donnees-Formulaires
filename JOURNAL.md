@@ -35,3 +35,167 @@ Cependant, si nous partons, plus tard, sur une interface web, FastAPI côté bac
 
 ### Adresse GitHub du projet
 [https://github.com/ThomasSanna/M1DE-Extracteur-Donnees-Formulaires](https://github.com/ThomasSanna/M1DE-Extracteur-Donnees-Formulaires)
+
+## Session 2 (03 Mars 2026)
+
+**Objectif de la session** : Implémentation technique complète du MVP (modèles, moteur d'extraction IA, validation et interface CLI) en suivant une approche modulaire et qualitative.
+
+**Prompts significatifs** :
+```
+1. "En tant qu'expert en ingénierie de données IA, analyse le Projet 13 du sujet.md. Explique le problème métier réel, propose un exemple concret d'entrée non-structurée vs sortie JSON, et identifie les points critiques pour un MVP robuste."
+2. "Conçois l'architecture de données pour cette application. Détaille les formats d'entrée (Documents sources + JSON Schema de configuration) et structure un format de sortie standardisé incluant obligatoirement des métadonnées de validation et des scores de confiance par champ."
+```
+
+**Problème rencontré** : 
+Au départ, la vision du projet était centrée sur "extraire du texte". Le risque était de produire un outil qui se contente de reformuler au lieu de structurer véritablement pour une exploitation informatique (base de données, Excel).
+
+**Solution trouvée** :
+Définition d'un système à deux entrées strictement séparées : 
+1. Le **Document** (donnée brute non structurée).
+2. Le **Schéma de configuration** (définition JSON des attentes : types, contraintes, champs obligatoires). 
+La sortie a été modifiée pour inclure systématiquement des **métadonnées de validation** (score de confiance, source de l'info, alertes) pour garantir qu'un humain puisse intervenir si l'IA doute.
+
+**Apprentissage clé** : 
+L'IA ne doit pas être vue comme un simple lecteur, mais comme un moteur de transformation de type "ETL" (Extract, Transform, Load). La qualité de l'extraction dépend autant de la définition du schéma que du texte d'entrée. Penser à la validation (confiance) dès le début évite le piège des hallucinations silencieuses.
+
+### Étape 1 : Structuration du projet et Environnement
+**Objectif** : Créer l'arborescence de fichiers et configurer les dépendances nécessaires.
+
+**Prompt** :
+```
+Crée la structure de fichiers suivante pour un projet Python "extracteur de données de formulaires" :
+src/
+  main.py           # Point d'entrée CLI
+  extractor.py      # Logique d'extraction IA
+  validator.py      # Validation Pydantic
+  models.py         # Les modèles Pydantic (schéma + résultat)
+schemas/
+  exemple_facture.json    # Un schéma exemple
+samples/
+  exemple_facture.txt     # Un document texte exemple
+.env.example
+requirements.txt
+
+Pour requirements.txt, inclure : openai, pydantic, python-dotenv
+```
+
+**Problème rencontré** : Besoin de s'assurer que les dépendances sont isolées et que les variables d'environnement (OpenAI API Key) sont prévues dès le départ.
+
+**Solution trouvée** : Utilisation d'un fichier `.env.example` pour documenter les secrets et organisation du code dans un dossier `src/` pour séparer la logique des données de test.
+
+**Apprentissage clé** : Une structure claire dès la première minute évite la dette technique et facilite la navigation dans le code lors des phases suivantes.
+
+### Étape 2 : Modélisation des données avec Pydantic
+**Objectif** : Définir des modèles de données robustes pour encadrer l'entrée (schéma) et la sortie (résultat d'extraction).
+
+**Prompt** : 
+```
+Contexte : Je construis un extracteur de données de formulaires en Python.
+Exigence : Crée les modèles Pydantic dans models.py.
+J'ai besoin de :
+1. FieldDefinition : définit un champ attendu...
+2. ExtractionSchema : liste de FieldDefinition...
+3. FieldResult : résultat d'un champ extrait...
+4. ExtractionResult : résultat global...
+```
+
+**Problème rencontré** : Aucun.
+
+**Solution trouvée** : Utilisation d'un modèle `FieldResult` qui sépare la `value` (pouvant être `None`) du `status` ("found", "missing", "uncertain") et du score de `confiance`.
+
+**Apprentissage clé** : Pydantic permet de définir des contrats de données stricts qui servent de documentation technique vivante pour le reste de l'application.
+
+### Étape 3 : Création des données de test (Schéma & Sample)
+**Objectif** : Générer un cas d'usage concret (facture) pour tester la chaîne d'extraction.
+
+**Prompt** :
+```
+Crée un fichier schemas/exemple_facture.json qui définit un schéma d'extraction pour une facture commerciale.
+Champs attendus : nom_fournisseur, date_facture, montant_total, numero_facture, nom_client.
+Crée aussi samples/exemple_facture.txt avec un exemple réaliste de facture en texte brut.
+```
+
+**Problème rencontré** : Le texte brut de la facture doit être suffisamment réaliste pour tester la capacité de l'IA à ignorer le bruit (mots-clés, mise en page textuelle).
+
+**Solution trouvée** : Création d'une facture fictive avec des montants clairs mais une structure non-tabulaire complexe.
+
+**Apprentissage clé** : La qualité du document de test est cruciale pour valider les prompts d'extraction par la suite.
+
+### Étape 4 : Le moteur d'extraction IA
+**Objectif** : Implémenter la logique de communication avec GPT-4o-mini pour transformer le texte en JSON structuré selon le schéma.
+
+**Prompt** :
+```
+Contexte : Extracteur de données en Python...
+Exigence : Implémente extractor.py avec une fonction extract(document_text: str, schema: ExtractionSchema) -> ExtractionResult.
+Architecture :
+- Construire un prompt système strict qui interdit à l'IA d'inventer des données manquantes...
+- Utiliser l'API OpenAI (gpt-4o-mini) avec response_format JSON...
+```
+
+**Problème rencontré** : Aucun, l'IA reconnaît bien les contraintes du prompt et génère un JSON conforme.
+
+**Solution trouvée** : Inclusion d'une instruction impérative dans le prompt système : "Si un champ est absent du document, retourne null. Ne jamais inventer." + Utilisation du `response_format={"type": "json_object"}`.
+
+**Apprentissage clé** : Le contrôle des hallucinations passe par un prompt système sans ambiguïté et un post-traitement rigoureux des scores de confiance.
+
+### Étape 5 : Logique de Validation métier
+**Objectif** : Vérifier la cohérence des extractions (champs obligatoires, types de données) et calculer un score de santé global.
+
+**Prompt** :
+```
+Exigence : Implémente validator.py avec une fonction validate(result: ExtractionResult, schema: ExtractionSchema) -> ExtractionResult.
+La validation doit :
+1. Vérifier que tous les champs "required=True" sont présents...
+2. Vérifier la cohérence des types...
+3. Ajouter des alertes...
+4. Calculer un statut global...
+```
+
+**Problème rencontré** : Le premier jet de validation modifiait les données extraites, ce qui rendait le tracking d'erreur difficile.
+
+**Solution trouvée** : Approche "Read-only" pour la validation : le validateur signale les anomalies via une liste d'alertes sans altérer la valeur brute extraite.
+
+**Apprentissage clé** : Séparer "Extraction" et "Validation" permet de garder une trace fiable de ce que l'IA a réellement produit avant toute décision métier.
+
+### Étape 6 : Interface CLI (Point d'entrée)
+**Objectif** : Permettre l'utilisation de l'outil via une ligne de commande simple (`extract` et `validate`).
+
+**Prompt** :
+```
+Exigence : Crée main.py avec une CLI simple via argparse.
+Commandes :
+- python main.py extract --document doc.txt --schema schema.json [--output res.json]
+- python main.py validate --result res.json --schema schema.json
+```
+
+**Problème rencontré** : Aucun
+
+**Solution trouvée** : Implémentation d'un résumé formaté en sortie de console avec mise en évidence des alertes (préfixes [ALERTE] et [SUCCÈS]).
+
+**Apprentissage clé** : Une CLI doit être autant pensée pour les scripts (export JSON) que pour les humains (affichage de résumé).
+
+## Session 3 (03 Mars 2026)
+
+**Objectif de la session** : 
+
+### Étape 7 : Tests des cas limites et vérification
+**Objectif** : Valider la robustesse de l'extracteur face à des entrées dégradées ou inattendues.
+
+**Prompt** :
+```
+Crée un fichier tests/test_edge_cases.py qui teste les cas limites de l'extracteur.
+
+Tests à écrire (sans appel réel à l'API, utilise unittest.mock) :
+1. Document vide → statut "error" ou "warning", pas de crash
+2. Tous les champs manquants → chaque champ a statut "missing" et confiance < 0.3
+3. JSON malformé retourné par l'IA → géré sans crash
+4. Schéma sans champs obligatoires → extraction réussie
+5. Valeur de type incorrect (string là où number attendu) → alerte de validation
+```
+
+**Problème rencontré** : L'utilisation de mocks pour simuler les réponses de l'API OpenAI est délicate car il faut reproduire fidèlement la structure de l'objet `ChatCompletion`.
+
+**Solution trouvée** : Mise en place d'une suite de tests unitaires utilisant `unittest.mock` pour injecter des réponses JSON variées (valides, corrompues, incomplètes) et vérifier que le système réagit conformément au cahier des charges sans interrompre l'exécution.
+
+**Apprentissage clé** : Tester les "mauvais cas" est aussi important que le "happy path". Cela m'a permis de renforcer la gestion d'erreurs dans `extractor.py` et `validator.py` pour garantir la stabilité du MVP.

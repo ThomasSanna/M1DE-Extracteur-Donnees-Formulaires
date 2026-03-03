@@ -1,0 +1,15 @@
+FACTURE
+Numero: FAC-2026-0042
+Date: 2026-03-03
+
+Fournisseur: DataForm SAS
+Client: Atelier Delta
+
+Prestations:
+- Extraction automatisee de formulaires: 1200.00 EUR
+- Support integration: 300.00 EUR
+
+TVA 20%: 300.00 EUR
+Montant total TTC: 1800.00 EUR
+
+Paiement sous 30 jours.

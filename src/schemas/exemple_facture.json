@@ -1,0 +1,36 @@
+{
+  "schema_name": "extraction_facture",
+  "description": "Schema minimal pour extraire les champs principaux d une facture.",
+  "fields": [
+    {
+      "name": "numero_facture",
+      "type": "string",
+      "required": true,
+      "description": "Identifiant unique de la facture"
+    },
+    {
+      "name": "date_facture",
+      "type": "date",
+      "required": true,
+      "description": "Date d emission de la facture au format YYYY-MM-DD"
+    },
+    {
+      "name": "nom_fournisseur",
+      "type": "string",
+      "required": true,
+      "description": "Nom de l entreprise qui emet la facture"
+    },
+    {
+      "name": "nom_client",
+      "type": "string",
+      "required": true,
+      "description": "Nom du client facture"
+    },
+    {
+      "name": "montant_total",
+      "type": "number",
+      "required": true,
+      "description": "Montant TTC total"
+    }
+  ]
+}
