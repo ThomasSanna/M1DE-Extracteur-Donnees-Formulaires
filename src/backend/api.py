@@ -13,29 +13,41 @@ Pourquoi FastAPI ?
   - Compatible Pydantic (mêmes modèles que le core)
   - Validation automatique des corps de requête
   - Documentation Swagger générée gratuitement (/docs)
+
+Imports :
+  Les modules core sont importés directement via le package src.core
+  (plus besoin de sys.path hack — src/ est un package Python valide).
 """
 
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-# --- Ajout du répertoire src/ au path pour importer les modules core ---
-SRC_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(SRC_DIR))
+# --- Imports core via le package propre ---
+from src.core.extractor import extract
+from src.core.models import ExtractionSchema
+from src.core.validator import validate_extraction
 
-from extractor import extract  # noqa: E402
-from models import ExtractionSchema  # noqa: E402
-from validator import validate_extraction  # noqa: E402
+# ---------------------------------------------------------------------------
+# Chemins de référence
+# ---------------------------------------------------------------------------
+# api.py est dans src/backend/ → project root = parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Schémas JSON d'exemple : data/schemas/ à la racine du projet
+SCHEMAS_DIR = PROJECT_ROOT / "data" / "schemas"
+
+# Fichiers statiques du frontend : src/frontend/
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 # ---------------------------------------------------------------------------
 # App
@@ -63,27 +75,35 @@ app.add_middleware(
 class ExtractionRequest(BaseModel):
     """Corps de la requête POST /api/extract."""
 
+    # 'schema' est un nom réservé par BaseModel (classmethod) → on utilise un alias
+    # Le JSON envoyé par le frontend reste { "document_text": ..., "schema": ... }
+    model_config = ConfigDict(populate_by_name=True)
+
     document_text: str = Field(description="Texte brut du document à analyser")
-    schema: Dict[str, Any] = Field(description="Schéma JSON d'extraction (ExtractionSchema)")
+    extraction_schema: Dict[str, Any] = Field(
+        alias="schema",
+        description="Schéma JSON d'extraction (ExtractionSchema)",
+    )
 
 
 class ExampleSchema(BaseModel):
     """Un schéma exemple exposé par /api/schemas/examples."""
 
+    # Même raison : alias pour éviter le conflit avec BaseModel.schema()
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     name: str
     description: str
-    schema: Dict[str, Any]
+    schema_data: Dict[str, Any] = Field(alias="schema")
 
 
 # ---------------------------------------------------------------------------
-# Schémas exemples prédéfinis (chargés depuis src/schemas/)
+# Schémas exemples prédéfinis (chargés depuis data/schemas/)
 # ---------------------------------------------------------------------------
-
-SCHEMAS_DIR = SRC_DIR / "schemas"
 
 
 def _load_example_schemas() -> List[ExampleSchema]:
-    """Charge tous les .json présents dans src/schemas/ comme exemples."""
+    """Charge tous les .json présents dans data/schemas/ comme exemples."""
     examples: List[ExampleSchema] = []
     if not SCHEMAS_DIR.exists():
         return examples
@@ -94,7 +114,7 @@ def _load_example_schemas() -> List[ExampleSchema]:
                 ExampleSchema(
                     name=data.get("schema_name", schema_file.stem),
                     description=data.get("description", ""),
-                    schema=data,
+                    schema_data=data,
                 )
             )
         except Exception:
@@ -150,7 +170,7 @@ def extract_document(body: ExtractionRequest):
 
     # Validation et parsing du schéma
     try:
-        extraction_schema = ExtractionSchema.model_validate(body.schema)
+        extraction_schema = ExtractionSchema.model_validate(body.extraction_schema)
     except Exception as exc:
         raise HTTPException(
             status_code=422,
@@ -178,7 +198,7 @@ def extract_document(body: ExtractionRequest):
             detail=f"Erreur inattendue lors de l'extraction : {exc}",
         ) from exc
 
-    # Si l'extraction a retourné une erreur interne (ex: timeout), on la propage
+    # Si l'extraction a retourné une erreur interne (ex: clé API), on la propage
     if extraction_result.status == "error" and extraction_result.validation.alerts:
         first_alert = extraction_result.validation.alerts[0]
         if "Missing DEEPSEEK_API_KEY" in first_alert or "Missing DEEPSEEK_API_URL" in first_alert:
@@ -193,21 +213,17 @@ def extract_document(body: ExtractionRequest):
 # Fichiers statiques frontend — montage en dernier pour ne pas masquer /api
 # ---------------------------------------------------------------------------
 
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-
 if FRONTEND_DIR.exists():
-    # Servir index.html pour la racine
     @app.get("/", include_in_schema=False)
     def serve_frontend():
         return FileResponse(FRONTEND_DIR / "index.html")
 
-    # Servir les assets statiques
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
 # ---------------------------------------------------------------------------
-# Entrypoint direct (python api.py)
+# Entrypoint direct
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("src.backend.api:app", host="0.0.0.0", port=8000, reload=True)

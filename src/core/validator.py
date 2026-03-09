@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from models import ExtractionResult, ExtractionSchema
+# Import relatif au package core — évite les dépendances sys.path
+from .models import ExtractionResult, ExtractionSchema
 
 
 def _is_valid_date(value: object) -> bool:

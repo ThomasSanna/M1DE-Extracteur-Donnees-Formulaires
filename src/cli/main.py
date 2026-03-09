@@ -7,9 +7,10 @@ import json
 import sys
 from pathlib import Path
 
-from extractor import extract
-from models import ExtractionResult, ExtractionSchema
-from validator import validate_extraction
+# Import absolu depuis la racine du projet (exécuté avec python -m src.cli.main)
+from src.core.extractor import extract
+from src.core.models import ExtractionResult, ExtractionSchema
+from src.core.validator import validate_extraction
 
 
 def _read_text_file(file_path: Path) -> str:

@@ -339,3 +339,59 @@ python-multipart
 3. **AbortController + clearTimeout** : Il faut toujours `clearTimeout` dans un `finally` pour éviter des appels résiduels après que la promesse ait résolu ou rejeté.
 
 4. **La double barrière UX** : Valider côté frontend (bouton désactivé) ET côté backend (HTTP 422) n'est pas une duplication — c'est une défense en profondeur. Le frontend améliore l'UX (pas d'attente inutile), le backend protège l'API des appels directs (curl, Postman, autres clients).
+
+---
+
+### Étape 5 : Refactoring de l'arborescence du projet
+
+**Problème identifié** :
+Après la création du backend et du frontend, l'arborescence `src/` présentait un défaut de cohérence structurel : les fichiers Python métier (`extractor.py`, `models.py`, `validator.py`, `main.py`) étaient à plat dans `src/`, au même niveau que les dossiers `backend/`, `frontend/`, et les dossiers de données (`schemas/`, `samples/`, `results/`). Cette ambiguïté rend le projet difficile à lire pour un nouvel arrivant et mélange **code** et **données**.
+
+**Prompt utilisé** :
+
+```
+Refactore le projet selon cette structure cible :
+src/
+  __init__.py          ← src devient un vrai package Python
+  core/                ← logique métier pure et réutilisable
+    __init__.py
+    models.py          ← imports relatifs internes (from .models)
+    extractor.py
+    validator.py
+  backend/
+    api.py             ← imports via src.core.x (plus de sys.path hack)
+  frontend/
+  cli/
+    main.py            ← point d'entrée CLI (from src.core.x)
+data/                  ← données hors src/ (schemas, samples, results)
+
+Règles :
+- Pas de sys.path.insert() nulle part
+- Imports relatifs dans core/ (from .models import ...)
+- Imports absolus depuis le package src dans backend/ et cli/
+- Mettre à jour tests/test_edge_cases.py (patches via chemin complet src.core.extractor._load_client)
+- Ajouter data/results/ dans .gitignore
+```
+
+**Décisions d'architecture** :
+
+- **`src/core/`** : couche domaine isolée — aucune dépendance vers `backend` ou `cli`. Les imports internes utilisent des **imports relatifs** (`from .models import ...`). Cela permet de les réutiliser sans connaître la structure parente.
+
+- **`sys.path` → package propre** : L'ancien `api.py` utilisait `sys.path.insert(0, str(SRC_DIR))` pour accéder à `extractor.py`. C'est un hack qui casse dès qu'on change de répertoire de travail. En faisant de `src/` un package Python (`__init__.py`), les imports `from src.core.extractor import extract` fonctionnent depuis n'importe où du moment que le projet root est dans `PYTHONPATH` (ce qu'`uvicorn` garantit si exécuté depuis la racine).
+
+- **`data/`** hors de `src/` : les schemas JSON, les samples et les résultats d'export sont des **données**, pas du code. Les mettre dans `src/` mélangeait deux types d'artefacts différents. Désormais tout fichier non-Python est dans `data/`.
+
+- **Compromis** : Cette structure nécessite que `uvicorn` soit lancé depuis la **racine du projet** (pas depuis `src/`). C'est documenté dans le README et dans les commandes. En v2, un `pyproject.toml` avec `packages = ["src"]` résoudrait ça proprement.
+
+**Problème rencontré** :
+Les tests unitaires patchaient `extractor._load_client` (l'ancien chemin). Après refactoring, le chemin du module est `src.core.extractor._load_client`. Les mocks `unittest.mock.patch` utilisent le chemin exact du module au moment de l'import — si le chemin est faux, le patch ne s'applique pas et le vrai client API est appelé (→ plantage avec `Missing DEEPSEEK_API_KEY`).
+
+**Solution** : Mise à jour de tous les `patch("extractor._load_client", ...)` en `patch("src.core.extractor._load_client", ...)` dans `tests/test_edge_cases.py`. Vérification en exécutant `pytest tests/ -v` → **5/5 tests PASSED**.
+
+**Ce que j'ai appris** :
+
+5. **La règle d'or des `unittest.mock.patch`** : le chemin du patch doit correspondre au chemin **d'importation effectif** du symbole au moment de son utilisation dans le module testé, pas au chemin de définition. Si `extractor.py` est importé via `src.core.extractor`, le patch doit cibler `src.core.extractor._load_client`.
+
+6. **`src/` comme package Python** : ajouter un `__init__.py` à `src/` transforme le répertoire en package importable. C'est la base de toute structure de projet Python sérieuse — plus besoin de hacks `sys.path`, les imports sont stables et découvrables par les outils (IDE, linters, mypy).
+
+7. **Données ≠ Code** : Mettre des fichiers JSON ou TXT dans `src/` est une erreur de catégorie. `src/` = code source Python ; les données vont dans `data/`, `assets/`, ou à la racine selon la convention du projet.

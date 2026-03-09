@@ -1,26 +1,17 @@
 import json
-import os
-import sys
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-
-# Ensure tests can import modules from src/ when executed from project root.
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC_PATH = os.path.join(PROJECT_ROOT, "src")
-if SRC_PATH not in sys.path:
-    sys.path.insert(0, SRC_PATH)
-
-from extractor import extract
-from models import (
+from src.core.extractor import extract
+from src.core.models import (
     ExtractionResult,
     ExtractionSchema,
     FieldDefinition,
     FieldResult,
     ValidationSummary,
 )
-from validator import validate_extraction
+from src.core.validator import validate_extraction
 
 
 def _build_mock_client(raw_content: str):
@@ -57,7 +48,8 @@ class TestExtractorEdgeCases(unittest.TestCase):
 
         mock_client = _build_mock_client(raw_content=json.dumps({}))
 
-        with patch("extractor._load_client", return_value=(mock_client, "mock-model")):
+        # Patch via le chemin complet du module core
+        with patch("src.core.extractor._load_client", return_value=(mock_client, "mock-model")):
             result = extract("Texte sans infos exploitables", schema)
 
         self.assertIn(result.status, {"warning", "error"})
@@ -74,7 +66,7 @@ class TestExtractorEdgeCases(unittest.TestCase):
 
         mock_client = _build_mock_client(raw_content="{not-valid-json")
 
-        with patch("extractor._load_client", return_value=(mock_client, "mock-model")):
+        with patch("src.core.extractor._load_client", return_value=(mock_client, "mock-model")):
             result = extract("Facture #A-123", schema)
 
         self.assertEqual(result.status, "error")
@@ -96,7 +88,7 @@ class TestExtractorEdgeCases(unittest.TestCase):
         }
         mock_client = _build_mock_client(raw_content=json.dumps(model_payload))
 
-        with patch("extractor._load_client", return_value=(mock_client, "mock-model")):
+        with patch("src.core.extractor._load_client", return_value=(mock_client, "mock-model")):
             result = extract("Document avec une note", schema)
 
         self.assertEqual(result.status, "success")

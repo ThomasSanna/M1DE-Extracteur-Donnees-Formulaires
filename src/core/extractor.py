@@ -9,7 +9,8 @@ from typing import Any, Dict
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from models import (
+# Import relatif au package core — indépendant du sys.path
+from .models import (
     ExtractionMetadata,
     ExtractionResult,
     ExtractionSchema,
