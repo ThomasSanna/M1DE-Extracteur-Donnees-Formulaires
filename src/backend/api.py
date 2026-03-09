@@ -279,53 +279,58 @@ def get_example_schemas():
 
 
 @app.post("/api/upload", tags=["Documents"])
-async def upload_document(file: UploadFile = File(...)):
+async def upload_documents(files: List[UploadFile] = File(...)):
     """
-    Upload et extraction de texte depuis un fichier.
+    Upload et extraction de texte depuis un ou plusieurs fichiers (Batch processing).
 
     Formats acceptés : .pdf (océrisé), .txt, .json
-    Limites de sécurité :
+    Limites de sécurité (par fichier) :
       - Taille max : 5 Mo
-      - Extensions whitelist : .pdf / .txt / .json
-      - Vérification magic bytes (signature binaire)
-      - Texte tronqué à 50 000 caractères pour éviter de saturer le LLM
-
-    Retourne :
-      { text, filename, size_ko, file_type, truncated, char_count }
+      - Extensions whitelist
+      - Signature binaire (magic bytes)
     """
-    # Lecture du contenu — nécessaire pour connaître la taille réelle
-    data = await file.read()
-    size = len(data)
-    filename = file.filename or "fichier_inconnu"
-    content_type = file.content_type or ""
+    results = []
 
-    # --- Sécurité : validation extension + taille ---
-    _validate_upload_file(filename=filename, content_type=content_type, size=size)
+    for file in files:
+        data = await file.read()
+        size = len(data)
+        filename = file.filename or "fichier_inconnu"
+        content_type = file.content_type or ""
 
-    # --- Sécurité : magic bytes ---
-    _check_magic_bytes(data=data, filename=filename)
+        try:
+            _validate_upload_file(filename=filename, content_type=content_type, size=size)
+            _check_magic_bytes(data=data, filename=filename)
+            text = _extract_text_from_bytes(data=data, filename=filename)
 
-    # --- Extraction texte ---
-    text = _extract_text_from_bytes(data=data, filename=filename)
+            truncated = False
+            if len(text) > MAX_TEXT_CHARS:
+                text = text[:MAX_TEXT_CHARS]
+                truncated = True
+                logger.warning("Texte tronqué à %d caractères pour %s", MAX_TEXT_CHARS, filename)
 
-    # --- Limite longueur texte (évite de dépasser les tokens LLM) ---
-    truncated = False
-    if len(text) > MAX_TEXT_CHARS:
-        text = text[:MAX_TEXT_CHARS]
-        truncated = True
-        logger.warning(
-            "Texte tronqué à %d caractères pour %s (original: %d)",
-            MAX_TEXT_CHARS, filename, len(text),
-        )
+            results.append({
+                "filename": filename,
+                "text": text,
+                "size_ko": round(size / 1024, 1),
+                "file_type": Path(filename).suffix.lower(),
+                "truncated": truncated,
+                "char_count": len(text),
+                "status": "success"
+            })
+        except HTTPException as exc:
+            results.append({
+                "filename": filename,
+                "status": "error",
+                "error": exc.detail
+            })
+        except Exception as exc:
+            results.append({
+                "filename": filename,
+                "status": "error",
+                "error": str(exc)
+            })
 
-    return JSONResponse(content={
-        "text":      text,
-        "filename":  filename,
-        "size_ko":   round(size / 1024, 1),
-        "file_type": Path(filename).suffix.lower(),
-        "truncated": truncated,
-        "char_count": len(text),
-    })
+    return JSONResponse(content={"files": results})
 
 
 @app.post("/api/extract", tags=["Extraction"])

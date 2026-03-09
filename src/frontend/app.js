@@ -267,23 +267,17 @@ const ExtractionAPI = (() => {
   }
 
   /**
-   * Upload un fichier et récupère le texte extrait.
-   *
-   * Sécurité déléguée au backend :
-   *   - extension whitelist (.pdf, .txt, .json)
-   *   - vérification magic bytes
-   *   - taille max 5 Mo
-   *
-   * @param {File} file
-   * @returns {Promise<{text:string, filename:string, size_ko:number, file_type:string, truncated:boolean}>}
+   * Upload de multiples fichiers.
+   * @param {File[]} fileArray
+   * @returns {Promise<{files: Array}>}
    */
-  async function uploadFile(file) {
+  async function uploadFiles(fileArray) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30_000); // 30s max pour l'upload
+    const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60s max
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      fileArray.forEach(f => formData.append('files', f));
 
       const res = await fetch(`${BASE_URL}/api/upload`, {
         method: 'POST',
@@ -313,7 +307,7 @@ const ExtractionAPI = (() => {
     }
   }
 
-  return { checkHealth, fetchExampleSchemas, extract, uploadFile };
+  return { checkHealth, fetchExampleSchemas, extract, uploadFiles };
 })();
 
 
@@ -459,7 +453,50 @@ const ResultsRenderer = (() => {
     resultActions.style.display = 'none';
   }
 
-  return { render, showError, reset };
+  /** Rendu pour un lot de fichiers (Batch Mode) */
+  function renderBatch(batchResults, schema) {
+    placeholder.classList.add('hidden');
+    content.classList.remove('hidden');
+    resultActions.style.display = 'flex';
+
+    const fields = schema.fields;
+    const tableHeaders = fields.map(f => `<th>${escapeHtml(f.name)}</th>`).join('');
+
+    const rows = batchResults.map(b => {
+      if (b.error) {
+        return `<tr><td style="font-weight:600">${escapeHtml(b.filename)}</td><td colspan="${fields.length}" style="color:var(--error)">❌ ${escapeHtml(b.error)}</td></tr>`;
+      }
+      const data = b.result.data || {};
+      const cells = fields.map(f => {
+        const val = data[f.name]?.value;
+        const display = val !== undefined && val !== null ? escapeHtml(String(val)) : '<span class="is-null">null</span>';
+        return `<td>${display}</td>`;
+      }).join('');
+      return `<tr><td style="font-weight:600">${escapeHtml(b.filename)}</td>${cells}</tr>`;
+    }).join('');
+
+    content.innerHTML = `
+      <div class="result-summary status-success" role="status">
+        <span class="result-summary-icon">📦</span>
+        <div class="result-summary-info">
+          <strong>Traitement par lots terminé</strong>
+          <p>${batchResults.length} document(s) traité(s).</p>
+        </div>
+      </div>
+      <div style="overflow-x: auto; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+          <thead style="background: var(--bg-surface); border-bottom: 1px solid var(--border);">
+            <tr><th style="padding: 0.75rem;">Fichier</th>${tableHeaders.replace(/<th>/g, '<th style="padding: 0.75rem;">')}</tr>
+          </thead>
+          <tbody>
+            ${rows.replace(/<td/g, '<td style="padding: 0.75rem; border-bottom: 1px solid var(--border);"')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  return { render, renderBatch, showError, reset };
 })();
 
 
@@ -498,6 +535,7 @@ function downloadJson(data, filename) {
 const App = (() => {
   let lastResult = null;   // Garde le dernier ExtractionResult pour l'export
   let activeSampleDocument = null; // Sample document du preset courant
+  let batchDocuments = []; // Liste des documents en mode batch
 
   const btnExtract = document.getElementById('btn-extract');
   const btnAddField = document.getElementById('btn-add-field');
@@ -518,6 +556,9 @@ const App = (() => {
   const uploadFileName = document.getElementById('upload-file-name');
   const uploadFileSize = document.getElementById('upload-file-size');
   const btnRemoveFile = document.getElementById('btn-remove-file');
+  const batchPreviewContainer = document.getElementById('batch-preview-container');
+  const batchFileCount = document.getElementById('batch-file-count');
+  const batchFileList = document.getElementById('batch-file-list');
 
   // Texte de facture exemple (embarqué, pas besoin de fetch)
   const SAMPLE_DOCUMENT = `FACTURE
@@ -544,7 +585,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
 
   /** Met à jour l'état du bouton Extract selon les saisies. */
   function updateExtractButton() {
-    const hasDoc = docInput.value.trim().length > 0;
+    const hasDoc = docInput.value.trim().length > 0 || batchDocuments.length > 0;
     const hasFields = SchemaBuilder.getSchema().fields.length > 0;
     btnExtract.disabled = !(hasDoc && hasFields);
   }
@@ -561,9 +602,8 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     const documentText = docInput.value.trim();
     const schema = SchemaBuilder.getSchema();
 
-    // Validations front-end rapides (doublonnent la validation backend pour UX)
-    if (!documentText) {
-      ToastManager.show('warning', 'Document vide', 'Collez du texte avant d\'extraire.');
+    if (!documentText && batchDocuments.length === 0) {
+      ToastManager.show('warning', 'Document vide', 'Collez du texte ou importez des fichiers.');
       return;
     }
     if (schema.fields.length === 0) {
@@ -576,26 +616,44 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     lastResult = null;
 
     try {
-      const result = await ExtractionAPI.extract(documentText, schema);
-      lastResult = result;
-      ResultsRenderer.render(result);
-
-      const status = result.status;
-      if (status === 'success') {
-        ToastManager.show('success', 'Extraction réussie',
-          `Confiance globale : ${Math.round((result.validation?.confidence_global ?? 0) * 100)}%`);
-      } else if (status === 'warning') {
-        ToastManager.show('warning', 'Extraction partielle',
-          'Certains champs sont manquants ou incertains.');
+      if (batchDocuments.length > 0) {
+        // --- MODE BATCH ---
+        let results = [];
+        for (let i = 0; i < batchDocuments.length; i++) {
+          const doc = batchDocuments[i];
+          btnExtract.querySelector('.btn-extract-loading').innerHTML = `<span class="spinner"></span>Fichier ${i + 1}/${batchDocuments.length}…`;
+          try {
+            const res = await ExtractionAPI.extract(doc.text, schema);
+            results.push({ filename: doc.filename, result: res });
+          } catch (err) {
+            results.push({ filename: doc.filename, error: err.detail || String(err) });
+          }
+        }
+        lastResult = results; // Permet d'exporter l'array de résultats
+        ResultsRenderer.renderBatch(results, schema);
+        ToastManager.show('success', 'Batch terminé', `${results.length} fichiers traités.`);
       } else {
-        ToastManager.show('error', 'Extraction échouée',
-          result.validation?.alerts?.[0] ?? 'Voir les alertes dans les résultats.');
+        // --- MODE NORMAL ---
+        btnExtract.querySelector('.btn-extract-loading').innerHTML = `<span class="spinner"></span>Extraction en cours…`;
+        const result = await ExtractionAPI.extract(documentText, schema);
+        lastResult = result;
+        ResultsRenderer.render(result);
+
+        if (result.status === 'success') {
+          ToastManager.show('success', 'Extraction réussie',
+            `Confiance globale : ${Math.round((result.validation?.confidence_global ?? 0) * 100)}%`);
+        } else if (result.status === 'warning') {
+          ToastManager.show('warning', 'Extraction partielle', 'Certains champs sont incertains.');
+        } else {
+          ToastManager.show('error', 'Extraction échouée', result.validation?.alerts?.[0] ?? 'Voir les erreurs.');
+        }
       }
     } catch (err) {
       const msg = err instanceof APIError ? err.detail : String(err);
       ResultsRenderer.showError(msg);
       ToastManager.show('error', 'Erreur', msg, 6000);
     } finally {
+      btnExtract.querySelector('.btn-extract-loading').innerHTML = `<span class="spinner"></span>Extraction en cours…`;
       setLoading(false);
       updateExtractButton();
     }
@@ -725,7 +783,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
 
     // Sélection via l'input fichier
     fileInput.addEventListener('change', () => {
-      if (fileInput.files?.[0]) handleFileUpload(fileInput.files[0]);
+      if (fileInput.files?.length > 0) handleFileUpload(fileInput.files);
     });
 
     // Drag events
@@ -739,8 +797,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     uploadZone.addEventListener('drop', e => {
       e.preventDefault();
       uploadZone.classList.remove('drag-over');
-      const file = e.dataTransfer?.files?.[0];
-      if (file) handleFileUpload(file);
+      if (e.dataTransfer?.files?.length > 0) handleFileUpload(e.dataTransfer.files);
     });
 
     // Retirer le fichier
@@ -758,22 +815,23 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     });
   }
 
-  /** Gère l'upload d'un fichier sélectionné. */
-  async function handleFileUpload(file) {
-    // Validation légère côté client (extension) — le backend refait la vraie validation
+  /** Gère l'upload d'un array/nodeList de fichiers. */
+  async function handleFileUpload(fileList) {
+    const files = Array.from(fileList);
     const allowed = ['.pdf', '.txt', '.json'];
-    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-    if (!allowed.includes(ext)) {
-      ToastManager.show('error', 'Format non supporté',
-        `Extension « ${ext} » refusée. Utilisez : PDF, TXT ou JSON.`);
+
+    // Filtrer les invalides côté UI
+    const validFiles = files.filter(f => {
+      const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+      return allowed.includes(ext) && f.size <= 5 * 1024 * 1024;
+    });
+
+    if (validFiles.length === 0) {
+      ToastManager.show('error', 'Format/Taille', 'Seuls PDF, TXT, JSON < 5Mo sont acceptés.');
       return;
     }
-
-    // Vérification taille côté client (5 Mo)
-    if (file.size > 5 * 1024 * 1024) {
-      ToastManager.show('error', 'Fichier trop volumineux',
-        `${(file.size / (1024 * 1024)).toFixed(1)} Mo — maximum : 5 Mo.`);
-      return;
+    if (validFiles.length < files.length) {
+      ToastManager.show('warning', 'Fichiers ignorés', `${files.length - validFiles.length} fichier(s) refusé(s).`);
     }
 
     // UI : état chargement
@@ -781,38 +839,59 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     uploadZoneContent.innerHTML = `
       <div class="upload-zone-content">
         <div class="spinner" style="border-top-color: var(--accent-1)"></div>
-        <p class="upload-label">Extraction du texte en cours…</p>
+        <p class="upload-label">Lecture de ${validFiles.length} fichier(s)…</p>
       </div>`;
 
     try {
-      const result = await ExtractionAPI.uploadFile(file);
+      const result = await ExtractionAPI.uploadFiles(validFiles);
+      const successes = (result.files || []).filter(f => f.status === 'success');
 
-      // Peupler le textarea
-      docInput.value = result.text;
-      const len = result.text.length;
-      charCount.textContent = `${len.toLocaleString('fr-FR')} caractère${len > 1 ? 's' : ''}`;
-      updateExtractButton();
+      if (successes.length === 0) throw new Error("Erreur de traitement des fichiers.");
 
-      // Afficher infos fichier
-      uploadZoneContent.classList.add('hidden');
-      uploadFileInfo.classList.remove('hidden');
-      uploadFileName.textContent = result.filename;
-      uploadFileSize.textContent = `${result.size_ko} Ko`;
+      if (successes.length === 1) {
+        // --- SINGLE MODE ---
+        batchDocuments = [];
+        docInput.value = successes[0].text;
+        const len = docInput.value.length;
+        charCount.textContent = `${len.toLocaleString('fr-FR')} caractère${len > 1 ? 's' : ''}`;
 
-      // Badge troncature
-      const existing = uploadFileInfo.querySelector('.upload-truncated-badge');
-      if (existing) existing.remove();
-      if (result.truncated) {
-        const badge = document.createElement('span');
-        badge.className = 'upload-truncated-badge';
-        badge.title = 'Texte tronqué à 50 000 caractères pour limiter les tokens LLM';
-        badge.textContent = 'Tronqué';
-        uploadFileSize.after(badge);
-        ToastManager.show('warning', 'Texte tronqué',
-          'Le document dépasse 50 000 caractères — il a été tronqué pour le LLM.');
+        docInput.classList.remove('hidden');
+        batchPreviewContainer.classList.add('hidden');
+
+        uploadZoneContent.classList.add('hidden');
+        uploadFileInfo.classList.remove('hidden');
+        uploadFileName.textContent = successes[0].filename;
+        uploadFileSize.textContent = `${successes[0].size_ko} Ko`;
+
+        const existing = uploadFileInfo.querySelector('.upload-truncated-badge');
+        if (existing) existing.remove();
+        if (successes[0].truncated) {
+          const badge = document.createElement('span');
+          badge.className = 'upload-truncated-badge';
+          badge.textContent = 'Tronqué';
+          uploadFileSize.after(badge);
+        }
+        ToastManager.show('success', 'Fichier importé', `${successes[0].filename}`);
       } else {
-        ToastManager.show('success', 'Fichier importé', `${result.filename} · ${result.char_count.toLocaleString('fr-FR')} caractères extraits.`);
+        // --- BATCH MODE ---
+        batchDocuments = successes;
+        docInput.value = '';
+        docInput.classList.add('hidden');
+        batchPreviewContainer.classList.remove('hidden');
+
+        batchFileCount.textContent = `${batchDocuments.length} fichiers`;
+        batchFileList.innerHTML = batchDocuments.map(d =>
+          `<li>• ${escapeHtml(d.filename)} <span style="opacity:0.6;font-size:0.85em">(${d.char_count} chars)${d.truncated ? ' ⚠️ Tronqué' : ''}</span></li>`
+        ).join('');
+
+        uploadZoneContent.classList.add('hidden');
+        uploadFileInfo.classList.remove('hidden');
+        uploadFileName.textContent = `${batchDocuments.length} fichiers préparés`;
+        uploadFileSize.textContent = `Traitement par lots prêt`;
+        ToastManager.show('success', 'Multiple import', `${batchDocuments.length} fichiers ajoutés.`);
       }
+
+      updateExtractButton();
 
     } catch (err) {
       const msg = err instanceof APIError ? err.detail : String(err);
@@ -826,16 +905,21 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
   /** Remet la zone upload dans son état initial. */
   function clearUploadedFile() {
     fileInput.value = '';
+    batchDocuments = [];
+    docInput.classList.remove('hidden');
+    batchPreviewContainer.classList.add('hidden');
+
     uploadZoneContent.innerHTML = `
       <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
       </svg>
-      <p class="upload-label">Glissez un fichier ici ou <span class="upload-browse">parcourez</span></p>
-      <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max</p>`;
+      <p class="upload-label">Glissez un ou plusieurs fichiers ici</p>
+      <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max par fichier</p>`;
     uploadZoneContent.classList.remove('hidden');
     uploadFileInfo.classList.add('hidden');
     const badge = uploadFileInfo.querySelector('.upload-truncated-badge');
     if (badge) badge.remove();
+    updateExtractButton();
   }
 
   /** Point d'entrée. */

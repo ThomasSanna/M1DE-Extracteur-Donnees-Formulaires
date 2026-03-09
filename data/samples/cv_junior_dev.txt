@@ -1,0 +1,40 @@
+Alice MERCIER
+14 Avenue des Peps
+75011 Paris
+06 88 44 22 11
+alice.mercier.dev@protonmail.com
+github.com/alicem-dev
+
+--- OBJECTIF ---
+Développeuse Fullstack Junior (JavaScript / React / Node.js)
+Disponible à partir de septembre 2026.
+
+--- COMPÉTENCES TECHNIQUES ---
+- Langages : JavaScript ES6+, HTML5, CSS3, TypeScript (débutante)
+- Frontend : React.js, TailwindCSS, Figma
+- Backend : Node.js, Express, MongoDB
+- Outils : Git, GitHub, VS Code, Postman
+
+--- EXPÉRIENCES ---
+
+Janvier 2026 - Juin 2026 | Stage de fin d'études - Développeuse Frontend
+Agence WebCreate - Paris
+* Intégration de maquettes Figma en composants React
+* Consommation d'API REST
+* Optimisation de l'accessibilité web (score Lighthouse 95+)
+
+Été 2025 | Projet personnel "TaskFlow" (Application de gestion de tâches)
+* Création d'une API avec Express.js et d'un frontend en React
+* Système d'authentification par JWT
+* Hébergement sur Render (back) et Vercel (front)
+
+--- FORMATION ---
+2023 - 2026 | Licence Professionnelle Métiers du Numérique et Développeur Web
+IUT de Paris Descartes - Paris, France
+
+2023 | Baccalauréat STI2D - Mention Assez Bien
+Lycée Jules Verne - Nantes
+
+--- LANGUES ---
+Français : Langue maternelle
+Anglais : B2 - Courant technique

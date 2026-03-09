@@ -154,14 +154,15 @@
       </div>
 
       <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Zone de dépôt de fichier">
-        <input type="file" id="file-input" accept=".pdf,.txt,.json" class="file-input-hidden" aria-hidden="true" />
+        <input type="file" id="file-input" accept=".pdf,.txt,.json" class="file-input-hidden" multiple
+          aria-hidden="true" />
         <div class="upload-zone-content" id="upload-zone-content">
           <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
           </svg>
-          <p class="upload-label">Glissez un fichier ici ou <span class="upload-browse">parcourez</span></p>
-          <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max</p>
+          <p class="upload-label">Glissez un ou plusieurs fichiers ici</p>
+          <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max par fichier</p>
         </div>
         <div class="upload-file-info hidden" id="upload-file-info">
           <svg viewBox="0 0 20 20" fill="currentColor" class="upload-file-icon">
@@ -175,10 +176,18 @@
         </div>
       </div>
 
-      <div class="doc-input-wrapper">
+      <div class="doc-input-wrapper" id="doc-input-wrapper">
         <textarea id="document-input" class="doc-textarea"
           placeholder="Collez ici le texte de votre document (facture, formulaire, email...)&#10;&#10;Ex:&#10;FACTURE&#10;Numéro: FAC-2026-0042&#10;Date: 2026-03-03&#10;Fournisseur: DataForm SAS&#10;..."
           spellcheck="false" aria-label="Texte du document à analyser"></textarea>
+        <!-- Vue Batch Mode -->
+        <div id="batch-preview-container" class="batch-preview-container hidden">
+          <div class="batch-preview-header">
+            <strong>Mode Traitement par lots (Batch)</strong>
+            <span id="batch-file-count" class="badge"></span>
+          </div>
+          <ul id="batch-file-list" class="batch-file-list"></ul>
+        </div>
         <div class="doc-char-count" id="doc-char-count">0 caractères</div>
       </div>
 

@@ -406,10 +406,12 @@ Permettre l'import de fichiers externes (PDF océrisés, TXT, JSON) via une inte
 Puis : "permet pour chaque template de générer, un exemple qu'on peut générer grace au bouton exemple"
 
 **Problèmes rencontrés** :
+
 1. **Sécurité de l'upload** : Accepter des fichiers de l'extérieur est le point de vulnérabilité numéro un d'une application web. Un simple contrôle de l'extension ne suffit pas (un script malveillant pourrait être renommé en `.pdf`). De plus, un document valide mais infiniment long pourrait saturer la fenêtre de contexte (tokens) de l'API LLM (et générer des appels coûteux).
 2. **Couplage Données/Code** : Gérer les textes d'exemples statiquement dans le code JavaScript (`app.js`) obligerait à republier l'application à chaque création d'un nouveau template d'extraction. Le code métier serait donc fortement couplé aux données métier.
 
 **Solutions trouvées** :
+
 1. **Défense en profondeur (API)** :
    - Conformément à la philosophie MVP, on a opté pour des vérifications internes strictes plutôt qu'une solution antivirus externe (ClamAV) très lourde à mettre en place en 6 heures.
    - **Taille limite fixée à 5 Mo** pour bloquer les DOS basiques.
@@ -420,5 +422,30 @@ Puis : "permet pour chaque template de générer, un exemple qu'on peut génére
    - L'API lit ce champ lors du démarrage et l'expose via `.dataset` dans les `<option>` de la sélection HTML. Le bouton "Exemple" se câble dynamiquement dessus.
 
 **Apprentissages clés** :
+
 1. **Vérification fiable des fichiers (Magic Bytes)** : Ne jamais faire confiance à l'extension d'un fichier (fournie par le client) ou au header MIME (HTTP). Lire physiquement les premiers octets d'un fichier est l'approche la plus robuste pour connaître sa vraie nature.
 2. **Le pattern Data-Driven Application** : L'interface utilisateur de formulaire est désormais complètement "Data-Driven" par rapport aux schémas. Pour rajouter un support (ex: "Bail de location"), il suffit de glisser un seul fichier `bail.json` contenant la description graphique des champs et son texte exemple dans `data/schemas/`. Zéro ligne de code frontend (HTML/JS/CSS) ni backend (Python) à toucher.
+
+### Étape 7 : Professionnalisation - Mode Batch (Traitement par lots)
+
+**Objectif de la session** :
+Permettre l'envoi de plusieurs fichiers en même temps via le drag-and-drop, extraire leurs textes et retravailler le rendu visuel dynamique pour afficher un tableau récapitulatif permettant de contrôler toutes les extractions en un seul coup d'œil, préparant un Export JSON propre.
+
+**Prompt utilisé** :
+"fais en sorte qu'on puisse mettre plusieurs fichiers en même temps ie batch process pour pouvoir professionnaliser le site. Ce qui est retourné doit donc être retravaillé je pense"
+
+**Problèmes rencontrés** :
+
+1. **Risque de Rate Limiting (429 Too Many Requests)** : L'API DeepSeek impose probablement des limites de requêtes par minute. Lancer 15 appels LLM strictement en parallèle via un `Promise.all()` côté JS risquerait de saturer le serveur externe ou de déclencher un bannissement temporaire.
+2. **Dette UX** : Le renderer actuel des résultats s'attend à un JSON simple (clef/valeur avec barres de confiance). Reproduire ça pour N fichiers créerait une interface horriblement longue et inutilisable.
+
+**Solutions trouvées** :
+
+1. **API Upload Multi-Fichiers** : Modification de la route FastAPI `/api/upload` en utilisant `files: List[UploadFile] = File(...)` au lieu d'un seul fichier, traitant le lot en une seule requête serveur et renvoyant un tableau de textes extraits.
+2. **Contrôle de Flux Séquentiel** : Au moment de l'extraction (`handleExtract`), au lieu de faire un appel global au backend pour que ce dernier s'occupe de tout, le JS du Frontend boucle et réalise les envois au backend un par un avec une attente asynchrone (`await`). Cela fait office de throttling "naturel" protecteur.
+3. **Nouveau `ResultsRenderer.renderBatch()`** :  Création d'une fonction de rendu spécifique au traitement par lot. Au lieu des barres de confiance détaillées, elle génère un grand `<table class="batch-table">` listant chaque fichier sur l'axe Y et chaque champ du schéma dynamique métier sur l'axe X, y ajoutant un flag rouge ❌ directement dans la cellule en cas d'erreur.
+
+**Apprentissages clés** :
+
+1. **Le pattern "Smart Client" pour la résilience API** : Déléguant le parcours en boucle (Batch) au `app.js` (frontend) plutôt qu'au Backend soulage considérablement l'API d'une logique de gestion de file d'attente asynchrone complexe et limite nativement le rythme des appels.
+2. **Rendu Dynamique Avancé** : Savoir construire dynamiquement un `<thead>` à partir des champs du schéma sélectionné et aligner les lignes `<tr>` des réponses dynamiques. Les données JSON Array exportables du mode batch s'alignent parfaitement avec la structure visuelle tabulaire générée en HTML.
