@@ -137,8 +137,6 @@ Crée aussi samples/exemple_facture.txt avec un exemple réaliste de facture en 
 
 **Solution trouvée** : Création d'une facture fictive avec des montants clairs mais une structure non-tabulaire complexe.
 
-**Apprentissage clé** : La qualité du document de test est cruciale pour valider les prompts d'extraction par la suite.
-
 ### Étape 4 : Le moteur d'extraction IA
 **Objectif** : Implémenter la logique de communication avec GPT-4o-mini pour transformer le texte en JSON structuré selon le schéma.
 
@@ -270,9 +268,7 @@ Cas limites à gérer côté JS :
   - Raccourci Ctrl+Enter pour déclencher l'extraction
 ```
 
-**Problème rencontré** : Le `AbortController` de fetch ne gère pas les timeouts nativement avant l'API expérimentale `AbortSignal.timeout()`. Il fallait combiner `setTimeout` + `controller.abort()` pour garantir compatibilité.
-
-**Solution** : Utilisation d'un `AbortController` manuel avec `clearTimeout` dans le `finally`, ce qui couvre tous les cas (timeout, succès, erreur HTTP) sans fuite de timer.
+**Problème rencontré** : Aucun.
 
 ---
 
@@ -327,18 +323,6 @@ python-multipart
 | Erreur réseau | Frontend (try/catch) | Toast "impossible de joindre le serveur" |
 | JSON invalide du schéma | Backend (422) | `model_validate()` Pydantic |
 | Réponse API `status: error` | Frontend (ResultsRenderer) | Affichage rouge + alerte |
-
----
-
-### Ce que j'ai appris
-
-1. **FastAPI + `sys.path`** : Pour intégrer rapidement un module Python existant sans le transformer en package, `sys.path.insert(0, str(SRC_DIR))` est une solution valide pour un MVP mais à éviter en production. La vraie solution est un package installable (`pyproject.toml`).
-
-2. **JS vanilla > framework pour les SPAs légères** : Sans état complexe partagé entre composants, le découpage en modules IIFE (Immediately Invoked Function Expression) avec `return` de l'API publique remplace avantageusement React pour une app aussi ciblée. Zéro dépendance, zéro bundle.
-
-3. **AbortController + clearTimeout** : Il faut toujours `clearTimeout` dans un `finally` pour éviter des appels résiduels après que la promesse ait résolu ou rejeté.
-
-4. **La double barrière UX** : Valider côté frontend (bouton désactivé) ET côté backend (HTTP 422) n'est pas une duplication — c'est une défense en profondeur. Le frontend améliore l'UX (pas d'attente inutile), le backend protège l'API des appels directs (curl, Postman, autres clients).
 
 ---
 
@@ -449,3 +433,17 @@ Permettre l'envoi de plusieurs fichiers en même temps via le drag-and-drop, ext
 
 1. **Le pattern "Smart Client" pour la résilience API** : Déléguant le parcours en boucle (Batch) au `app.js` (frontend) plutôt qu'au Backend soulage considérablement l'API d'une logique de gestion de file d'attente asynchrone complexe et limite nativement le rythme des appels.
 2. **Rendu Dynamique Avancé** : Savoir construire dynamiquement un `<thead>` à partir des champs du schéma sélectionné et aligner les lignes `<tr>` des réponses dynamiques. Les données JSON Array exportables du mode batch s'alignent parfaitement avec la structure visuelle tabulaire générée en HTML.
+
+## Bilan du projet 
+
+Ce projet m'a permis d'utiliser, pour la première fois, la fonctionnalité de skills, permettant de ne pas répéter mes conditions lors des prompts. 
+
+Je ne crois pas que le meta prompting m'a été d'une grande aide, mais ça permet de restructurer les idées lorsqu'elles sont vagues et mal dites. 
+
+J'ai beaucoup aimé le travail sur les prompts, et j'ai trouvé ça très intéressant de voir comment les LLM réagissent à différentes formulations. 
+
+Pour ce qui est de l'IA dans l'app, je n'ai pas fais de changement de modèle selon la tâche, car deepseek est déjà un bon compromis de calcul et de coût, est les documents sont censés être environ du même format (cv, etc..).
+
+L'utilisation d'autres technique de "vibe coding" hors skills ne me semble pas très utile, car les skills permettent déjà de ne pas répéter mes conditions lors des prompts.
+
+J'aurais aimé tester la technique BMAD mais trop coûteux.
