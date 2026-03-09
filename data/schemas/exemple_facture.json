@@ -32,5 +32,6 @@
       "required": true,
       "description": "Montant TTC total"
     }
-  ]
+  ],
+  "sample_document": "FACTURE\nNuméro: FAC-2026-0042\nDate: 2026-03-03\n\nFournisseur: DataForm SAS\nAdresse: 12 rue de la Paix, 75001 Paris\nSIRET: 123 456 789 00012\n\nClient: Atelier Delta\nAdresse: 8 boulevard Haussmann, 75009 Paris\n\nPrestations:\n- Extraction automatisée de formulaires : 1200,00 EUR\n- Support intégration : 300,00 EUR\n\nSous-total HT : 1500,00 EUR\nTVA 20% : 300,00 EUR\nMontant total TTC : 1800,00 EUR\n\nPaiement sous 30 jours.\nIBAN: FR76 3000 6000 0112 3456 7890 189"
 }

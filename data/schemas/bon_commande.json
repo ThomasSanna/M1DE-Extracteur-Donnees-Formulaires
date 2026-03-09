@@ -1,0 +1,67 @@
+{
+    "schema_name": "bon_commande",
+    "description": "Extraction des données d'un bon de commande fournisseur ou client.",
+    "fields": [
+        {
+            "name": "numero_commande",
+            "type": "string",
+            "required": true,
+            "description": "Référence unique du bon de commande"
+        },
+        {
+            "name": "date_commande",
+            "type": "date",
+            "required": true,
+            "description": "Date d'émission au format YYYY-MM-DD"
+        },
+        {
+            "name": "nom_client",
+            "type": "string",
+            "required": true,
+            "description": "Nom ou raison sociale du client"
+        },
+        {
+            "name": "nom_fournisseur",
+            "type": "string",
+            "required": true,
+            "description": "Nom ou raison sociale du fournisseur"
+        },
+        {
+            "name": "description_article",
+            "type": "string",
+            "required": false,
+            "description": "Description de l'article ou service commandé"
+        },
+        {
+            "name": "quantite",
+            "type": "number",
+            "required": false,
+            "description": "Quantité commandée"
+        },
+        {
+            "name": "prix_unitaire_ht",
+            "type": "number",
+            "required": false,
+            "description": "Prix unitaire hors taxes en euros"
+        },
+        {
+            "name": "montant_total_ht",
+            "type": "number",
+            "required": true,
+            "description": "Montant total hors taxes en euros"
+        },
+        {
+            "name": "montant_total_ttc",
+            "type": "number",
+            "required": true,
+            "description": "Montant total TTC en euros"
+        },
+        {
+            "name": "delai_livraison",
+            "type": "string",
+            "required": false,
+            "description": "Délai ou date de livraison souhaitée"
+        }
+    ],
+    "sample_document": "BON DE COMMANDE N° BC-2026-0189\n\nDate : 2026-03-07\n\nCLIENT :\nSociété : DistribPro SARL\nAdresse : 22 rue du Marché, 44000 Nantes\nContact : M. Pierre Auger — p.auger@distribpro.fr\n\nFOURNISSEUR :\nSociété : TechSupply SA\nAdresse : 5 parc d'activités Ouest, 69800 Saint-Priest\nTél : 04 72 00 11 22\n\nDÉSIGNATION DES ARTICLES :\n\n  Réf TS-4401 — Serveur rack 2U Dell PowerEdge R350\n  Quantité : 3 unités\n  Prix unitaire HT : 1 850,00 EUR\n  Total ligne HT : 5 550,00 EUR\n\n  Réf TS-5002 — Câble réseau Cat. 6A (lot de 10)\n  Quantité : 5 lots\n  Prix unitaire HT : 48,00 EUR\n  Total ligne HT : 240,00 EUR\n\nSOUS-TOTAL HT : 5 790,00 EUR\nTVA 20 % : 1 158,00 EUR\nTOTAL TTC : 6 948,00 EUR\n\nDélai de livraison souhaité : sous 10 jours ouvrés à compter de la réception.\nMode de paiement : virement bancaire à 30 jours.\n\nSignature client : Pierre Auger\nDate : 07/03/2026"
+}

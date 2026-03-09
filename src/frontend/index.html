@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Extracteur de Données — FormAI</title>
-  <meta name="description" content="Extrayez automatiquement des données structurées depuis n'importe quel document texte grâce à l'IA. Définissez votre schéma, collez votre document, obtenez du JSON propre." />
+  <meta name="description"
+    content="Extrayez automatiquement des données structurées depuis n'importe quel document texte grâce à l'IA. Définissez votre schéma, collez votre document, obtenez du JSON propre." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
+
 <body>
 
   <!-- ===== TOAST CONTAINER ===== -->
@@ -20,14 +25,14 @@
     <div class="header-inner">
       <div class="logo">
         <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="32" height="32" rx="8" fill="url(#lg)"/>
-          <path d="M8 10h16M8 16h10M8 22h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="24" cy="22" r="4" fill="#fff" fill-opacity=".25" stroke="#fff" stroke-width="1.5"/>
-          <path d="M22.5 22l1 1 2-2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect width="32" height="32" rx="8" fill="url(#lg)" />
+          <path d="M8 10h16M8 16h10M8 22h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="24" cy="22" r="4" fill="#fff" fill-opacity=".25" stroke="#fff" stroke-width="1.5" />
+          <path d="M22.5 22l1 1 2-2" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
           <defs>
             <linearGradient id="lg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#6366f1"/>
-              <stop offset="1" stop-color="#8b5cf6"/>
+              <stop stop-color="#6366f1" />
+              <stop offset="1" stop-color="#8b5cf6" />
             </linearGradient>
           </defs>
         </svg>
@@ -46,7 +51,7 @@
   <!-- ===== HERO ===== -->
   <section class="hero">
     <h1 class="hero-title">
-      Extraction de données<br/>
+      Extraction de données<br />
       <span class="gradient-text">par intelligence artificielle</span>
     </h1>
     <p class="hero-sub">
@@ -61,7 +66,11 @@
     <section class="panel panel-schema" aria-label="Schéma d'extraction">
       <div class="panel-header">
         <h2 class="panel-title">
-          <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1z"
+              clip-rule="evenodd" />
+          </svg>
           Schéma
         </h2>
         <div class="panel-actions">
@@ -69,7 +78,11 @@
             <option value="">Exemples…</option>
           </select>
           <button id="btn-clear-schema" class="btn-icon" title="Effacer le schéma">
-            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clip-rule="evenodd" />
+            </svg>
           </button>
         </div>
       </div>
@@ -77,7 +90,8 @@
       <div class="schema-meta">
         <div class="form-group">
           <label class="form-label" for="schema-name">Nom du schéma</label>
-          <input id="schema-name" type="text" class="form-input" placeholder="ex: extraction_facture" value="mon_schema" />
+          <input id="schema-name" type="text" class="form-input" placeholder="ex: extraction_facture"
+            value="mon_schema" />
         </div>
         <div class="form-group">
           <label class="form-label" for="schema-desc">Description</label>
@@ -93,13 +107,21 @@
       <ul id="fields-list" class="fields-list" aria-label="Liste des champs"></ul>
 
       <button id="btn-add-field" class="btn-add-field">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+            clip-rule="evenodd" />
+        </svg>
         Ajouter un champ
       </button>
 
       <div class="schema-json-preview" id="schema-preview-section">
         <button class="collapsible-toggle" id="toggle-schema-preview" aria-expanded="false">
-          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
           Aperçu JSON
         </button>
         <pre id="schema-json-output" class="code-preview hidden" aria-label="Aperçu JSON du schéma"></pre>
@@ -110,7 +132,11 @@
     <section class="panel panel-document" aria-label="Document source">
       <div class="panel-header">
         <h2 class="panel-title">
-          <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+              clip-rule="evenodd" />
+          </svg>
           Document
         </h2>
         <div class="panel-actions">
@@ -118,26 +144,52 @@
             Exemple
           </button>
           <button id="btn-clear-doc" class="btn-icon" title="Effacer le document">
-            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clip-rule="evenodd" />
+            </svg>
           </button>
         </div>
       </div>
 
+      <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Zone de dépôt de fichier">
+        <input type="file" id="file-input" accept=".pdf,.txt,.json" class="file-input-hidden" aria-hidden="true" />
+        <div class="upload-zone-content" id="upload-zone-content">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+          <p class="upload-label">Glissez un fichier ici ou <span class="upload-browse">parcourez</span></p>
+          <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max</p>
+        </div>
+        <div class="upload-file-info hidden" id="upload-file-info">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="upload-file-icon">
+            <path fill-rule="evenodd"
+              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              clip-rule="evenodd" />
+          </svg>
+          <span id="upload-file-name" class="upload-file-name"></span>
+          <span id="upload-file-size" class="upload-file-size"></span>
+          <button id="btn-remove-file" class="btn-remove-upload" title="Retirer le fichier">✕</button>
+        </div>
+      </div>
+
       <div class="doc-input-wrapper">
-        <textarea
-          id="document-input"
-          class="doc-textarea"
+        <textarea id="document-input" class="doc-textarea"
           placeholder="Collez ici le texte de votre document (facture, formulaire, email...)&#10;&#10;Ex:&#10;FACTURE&#10;Numéro: FAC-2026-0042&#10;Date: 2026-03-03&#10;Fournisseur: DataForm SAS&#10;..."
-          spellcheck="false"
-          aria-label="Texte du document à analyser"
-        ></textarea>
+          spellcheck="false" aria-label="Texte du document à analyser"></textarea>
         <div class="doc-char-count" id="doc-char-count">0 caractères</div>
       </div>
 
       <div class="extract-box">
         <button id="btn-extract" class="btn-extract" disabled>
           <span class="btn-extract-content">
-            <svg class="btn-icon-lg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd"/></svg>
+            <svg class="btn-icon-lg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                clip-rule="evenodd" />
+            </svg>
             Extraire les données
           </span>
           <span class="btn-extract-loading hidden">
@@ -153,12 +205,20 @@
     <section class="panel panel-results" aria-label="Résultats d'extraction">
       <div class="panel-header">
         <h2 class="panel-title">
-          <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd" />
+          </svg>
           Résultats
         </h2>
         <div class="panel-actions" id="result-actions" style="display:none">
           <button id="btn-export-json" class="btn-ghost-sm">
-            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                clip-rule="evenodd" />
+            </svg>
             Exporter JSON
           </button>
         </div>
@@ -167,7 +227,10 @@
       <!-- Placeholder initial -->
       <div class="results-placeholder" id="results-placeholder">
         <div class="placeholder-icon">
-          <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/><path d="M20 32h24M32 20v24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4" />
+            <path d="M20 32h24M32 20v24" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
         </div>
         <p>Les résultats apparaîtront ici après l'extraction.</p>
       </div>
@@ -180,9 +243,10 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
-    <p>FormAI — Extracteur de données IA &nbsp;·&nbsp; Projet 13 — M1 DevEngineering</p>
+    <p>FormAI — Extracteur de données IA &nbsp;·&nbsp; Projet 13 — SANNA Thomas, M1 Data Engineer</p>
   </footer>
 
   <script src="/static/app.js"></script>
 </body>
+
 </html>

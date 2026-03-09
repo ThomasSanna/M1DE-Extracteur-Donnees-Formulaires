@@ -1,0 +1,61 @@
+{
+    "schema_name": "fiche_paie",
+    "description": "Extraction des informations essentielles d'une fiche de paie.",
+    "fields": [
+        {
+            "name": "nom_employe",
+            "type": "string",
+            "required": true,
+            "description": "Nom et prénom de l'employé"
+        },
+        {
+            "name": "nom_employeur",
+            "type": "string",
+            "required": true,
+            "description": "Raison sociale de l'entreprise"
+        },
+        {
+            "name": "periode_paie",
+            "type": "string",
+            "required": true,
+            "description": "Mois et année de la période de paie (ex: Mars 2026)"
+        },
+        {
+            "name": "salaire_brut",
+            "type": "number",
+            "required": true,
+            "description": "Salaire brut mensuel en euros"
+        },
+        {
+            "name": "cotisations_salariales",
+            "type": "number",
+            "required": false,
+            "description": "Total des cotisations salariales en euros"
+        },
+        {
+            "name": "salaire_net_avant_impot",
+            "type": "number",
+            "required": true,
+            "description": "Salaire net avant impôt sur le revenu en euros"
+        },
+        {
+            "name": "impot_source",
+            "type": "number",
+            "required": false,
+            "description": "Montant du prélèvement à la source en euros"
+        },
+        {
+            "name": "salaire_net_paye",
+            "type": "number",
+            "required": true,
+            "description": "Salaire net effectivement versé en euros"
+        },
+        {
+            "name": "cumul_brut_annuel",
+            "type": "number",
+            "required": false,
+            "description": "Cumul du salaire brut depuis janvier"
+        }
+    ],
+    "sample_document": "BULLETIN DE PAIE — MARS 2026\n\nEmployeur : InnoSoft SAS\nSIRET : 452 891 230 00041\nConvention collective : Syntec (Numérique)\n\nEmployé : Sophie Martin\nMatricule : EMP-0087\nPoste : Chef de projet senior\nDate d'entrée : 01/09/2021\n\n----- ÉLÉMENTS DE RÉMUNÉRATION -----\n\nSalaire de base (35h/sem)            3 600,00 EUR\nPrime d'ancienneté (5 ans)              180,00 EUR\n--------------------------------------------\nSALAIRE BRUT :                       3 780,00 EUR\n\n----- COTISATIONS SALARIALES -----\nMaladie / Maternité (0,40 %)            15,12 EUR\nCSG déductible (6,80 %)               257,04 EUR\nCSG/CRDS non déductible (2,90 %)      109,62 EUR\nRetraite complémentaire AGIRC (3,15 %)118,97 EUR\nChômage (0 %)                            0,00 EUR\n--------------------------------------------\nTOTAL COTISATIONS SALARIALES :        500,75 EUR\n\nNET AVANT IMPÔT SUR LE REVENU :      3 279,25 EUR\nPrélèvement à la source (8,4 %) :     275,40 EUR\n--------------------------------------------\nNET À PAYER :                         3 003,85 EUR\n\nCumul brut annuel 2026 (janv.–mars) : 11 340,00 EUR\n\nVirement le : 31/03/2026\nIBAN : FR76 1234 5678 9012 3456 7890 123"
+}

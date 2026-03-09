@@ -1,0 +1,55 @@
+{
+    "schema_name": "cv_candidat",
+    "description": "Extraction des informations clés d'un CV ou résumé de candidat.",
+    "fields": [
+        {
+            "name": "nom_complet",
+            "type": "string",
+            "required": true,
+            "description": "Nom et prénom du candidat"
+        },
+        {
+            "name": "email",
+            "type": "string",
+            "required": true,
+            "description": "Adresse email de contact"
+        },
+        {
+            "name": "telephone",
+            "type": "string",
+            "required": false,
+            "description": "Numéro de téléphone"
+        },
+        {
+            "name": "poste_vise",
+            "type": "string",
+            "required": true,
+            "description": "Intitulé du poste recherché ou du profil"
+        },
+        {
+            "name": "annees_experience",
+            "type": "number",
+            "required": false,
+            "description": "Nombre d'années d'expérience totale"
+        },
+        {
+            "name": "formation_plus_haute",
+            "type": "string",
+            "required": false,
+            "description": "Diplôme le plus élevé obtenu"
+        },
+        {
+            "name": "competences_principales",
+            "type": "string",
+            "required": false,
+            "description": "Liste des compétences clés (technologies, langues, etc.)"
+        },
+        {
+            "name": "disponibilite",
+            "type": "string",
+            "required": false,
+            "description": "Date ou période de disponibilité"
+        }
+    ],
+    "sample_document": "CURRICULUM VITAE\n\nMartin Dupont\n12 rue des Lilas, 69003 Lyon\nTél : 06 12 34 56 78 | martin.dupont@email.fr\nLinkedIn : linkedin.com/in/martindupont\n\nPOSTE RECHERCHÉ : Développeur Data / Ingénieur Machine Learning\n\n--- EXPÉRIENCE PROFESSIONNELLE ---\n\n2022 – aujourd'hui | Data Engineer — TechCorp SA, Paris\n  - Développement de pipelines ETL (Python, Apache Spark)\n  - Déploiement de modèles ML sur AWS SageMaker\n  - Réduction du temps de traitement de 40 %\n\n2020 – 2022 | Analyste BI — DataInsight, Lyon\n  - Création de dashboards Power BI pour 5 BU\n  - Requêtes SQL avancées sur bases PostgreSQL\n\n--- FORMATION ---\n\n2020 | Master 2 Data Science — Université Claude Bernard Lyon 1\n2018 | Licence Informatique — Université Lyon 3\n\n--- COMPÉTENCES ---\nPython, SQL, Spark, dbt, Airflow, Docker, AWS, Power BI\nAnglais : C1 (TOEIC 935) | Espagnol : B2\n\nDisponibilité : Immédiate"
+}

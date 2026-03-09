@@ -1,0 +1,61 @@
+{
+    "schema_name": "contrat_travail",
+    "description": "Extraction des clauses principales d'un contrat de travail (CDI, CDD, stage).",
+    "fields": [
+        {
+            "name": "nom_employe",
+            "type": "string",
+            "required": true,
+            "description": "Nom et prénom de l'employé"
+        },
+        {
+            "name": "nom_employeur",
+            "type": "string",
+            "required": true,
+            "description": "Raison sociale de l'entreprise employeur"
+        },
+        {
+            "name": "type_contrat",
+            "type": "string",
+            "required": true,
+            "description": "Type de contrat : CDI, CDD, stage, alternance..."
+        },
+        {
+            "name": "date_debut",
+            "type": "date",
+            "required": true,
+            "description": "Date de début du contrat au format YYYY-MM-DD"
+        },
+        {
+            "name": "date_fin",
+            "type": "date",
+            "required": false,
+            "description": "Date de fin si CDD ou stage (YYYY-MM-DD)"
+        },
+        {
+            "name": "poste",
+            "type": "string",
+            "required": true,
+            "description": "Intitulé du poste occupé"
+        },
+        {
+            "name": "salaire_mensuel_brut",
+            "type": "number",
+            "required": true,
+            "description": "Salaire mensuel brut en euros"
+        },
+        {
+            "name": "duree_hebdomadaire",
+            "type": "number",
+            "required": false,
+            "description": "Durée hebdomadaire de travail en heures"
+        },
+        {
+            "name": "periode_essai_mois",
+            "type": "number",
+            "required": false,
+            "description": "Durée de la période d'essai en mois"
+        }
+    ],
+    "sample_document": "CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE (CDI)\n\nEntre les soussignés :\n\nSOCIÉTÉ : InnoSoft SAS\nSiège social : 45 avenue de la République, 75011 Paris\nReprésentée par : Mme Claire Lefort, Directrice des Ressources Humaines\n\nET\n\nM. Alexandre Bernard\nNé le 14 mars 1995 à Bordeaux\nDemeurant : 8 rue Carnot, 33000 Bordeaux\n\nIl est convenu ce qui suit :\n\nArticle 1 – Nature du contrat\nLe présent contrat est un CDI à temps plein, régi par la Convention Collective du Numérique.\n\nArticle 2 – Poste et missions\nM. Bernard est engagé en qualité de Développeur Back-End Senior.\nIl intégrera l'équipe Produit et sera rattaché au CTO.\n\nArticle 3 – Date de prise de poste\nLe contrat prend effet le 1er avril 2026.\n\nArticle 4 – Période d'essai\nUne période d'essai de 3 mois est prévue, renouvelable une fois.\n\nArticle 5 – Durée du travail\nLa durée hebdomadaire de travail est fixée à 35 heures.\n\nArticle 6 – Rémunération\nM. Bernard percevra une rémunération mensuelle brute de 4 200,00 euros.\n\nFait à Paris, le 15 mars 2026."
+}

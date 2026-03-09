@@ -21,7 +21,7 @@ Pour la validation des données extraites, Pydantic est un choix naturel pour sa
 
 Pour le moment, je me concentrerai probablement sur une interface CLI, on verra. L'objectif étant de se concentrer sur la logique d'extraction etc. Plutôt que de perdre du temps sur l'interface utilisateur.
 
-Cependant, si nous partons, plus tard, sur une interface web, FastAPI côté backend serait un excellent choix pour sa simplicité et sa rapidité de développement, ainsi que pour son intégration facile avec les modèles d'IA. Côté frontend, React serait un choix solide pour construire une interface utilisateur réactive et moderne.
+Cependant, si nous partons, plus tard, sur une interface web, FastAPI côté backend serait un excellent choix pour sa simplicité et sa rapidité de développement, ainsi que pour son intégration facile avec les modèles d'IA. Côté frontend, React ou bien du HTML/CSS/JS serait un choix solide pour construire une interface utilisateur réactive et moderne, tout en étant légèrement plus rapide à développer.
 
 ### Scope négatif
 - Pas de déploiement Cloud complexe (AWS/Azure).
@@ -395,3 +395,30 @@ Les tests unitaires patchaient `extractor._load_client` (l'ancien chemin). Aprè
 6. **`src/` comme package Python** : ajouter un `__init__.py` à `src/` transforme le répertoire en package importable. C'est la base de toute structure de projet Python sérieuse — plus besoin de hacks `sys.path`, les imports sont stables et découvrables par les outils (IDE, linters, mypy).
 
 7. **Données ≠ Code** : Mettre des fichiers JSON ou TXT dans `src/` est une erreur de catégorie. `src/` = code source Python ; les données vont dans `data/`, `assets/`, ou à la racine selon la convention du projet.
+
+### Étape 6 : Import de documents sécurisé & Exemples dynamiques
+
+**Objectif de la session** :
+Permettre l'import de fichiers externes (PDF océrisés, TXT, JSON) via une interface drag-and-drop, avec une couche de sécurité robuste (programmation défensive) côté backend, tout en restant dans le périmètre du MVP. De plus, associer dynamiquement un document d'exemple à chaque template de schéma d'extraction pour faciliter les tests.
+
+**Prompt utilisé** :
+"Crée plusieurs autres templates qui pourraient être utilisés, classique. De plus, fait en sorte qu'on puisse importer un fichier type pdf déjà océrisé, txt, json.. Le tout sécurisé, poid max, antivirus..."
+Puis : "permet pour chaque template de générer, un exemple qu'on peut générer grace au bouton exemple"
+
+**Problèmes rencontrés** :
+1. **Sécurité de l'upload** : Accepter des fichiers de l'extérieur est le point de vulnérabilité numéro un d'une application web. Un simple contrôle de l'extension ne suffit pas (un script malveillant pourrait être renommé en `.pdf`). De plus, un document valide mais infiniment long pourrait saturer la fenêtre de contexte (tokens) de l'API LLM (et générer des appels coûteux).
+2. **Couplage Données/Code** : Gérer les textes d'exemples statiquement dans le code JavaScript (`app.js`) obligerait à republier l'application à chaque création d'un nouveau template d'extraction. Le code métier serait donc fortement couplé aux données métier.
+
+**Solutions trouvées** :
+1. **Défense en profondeur (API)** :
+   - Conformément à la philosophie MVP, on a opté pour des vérifications internes strictes plutôt qu'une solution antivirus externe (ClamAV) très lourde à mettre en place en 6 heures.
+   - **Taille limite fixée à 5 Mo** pour bloquer les DOS basiques.
+   - **Contrôle des "Magic Bytes"** : le backend vérifie la signature binaire du fichier indépendamment de son nom. Si l'extension indique `.pdf`, le code lit les données et exige qu'elles commencent par `b"%PDF"`. Pour les `.json`, il tente de parser la donnée (`json.loads`) en amont.
+   - **Troncature du texte à 50 000 caractères** pour protéger la limite de tokens LLM et la facture API. Le frontend (via `app.js`) alerte l'utilisateur par un léger warning que le texte a été tronqué.
+2. **Co-localisation des exemples (Data-Driven UX)** :
+   - Ajout d'une propriété `sample_document` à l'intérieur même de nos fichiers templates JSON situés dans `data/schemas/`.
+   - L'API lit ce champ lors du démarrage et l'expose via `.dataset` dans les `<option>` de la sélection HTML. Le bouton "Exemple" se câble dynamiquement dessus.
+
+**Apprentissages clés** :
+1. **Vérification fiable des fichiers (Magic Bytes)** : Ne jamais faire confiance à l'extension d'un fichier (fournie par le client) ou au header MIME (HTTP). Lire physiquement les premiers octets d'un fichier est l'approche la plus robuste pour connaître sa vraie nature.
+2. **Le pattern Data-Driven Application** : L'interface utilisateur de formulaire est désormais complètement "Data-Driven" par rapport aux schémas. Pour rajouter un support (ex: "Bail de location"), il suffit de glisser un seul fichier `bail.json` contenant la description graphique des champs et son texte exemple dans `data/schemas/`. Zéro ligne de code frontend (HTML/JS/CSS) ni backend (Python) à toucher.

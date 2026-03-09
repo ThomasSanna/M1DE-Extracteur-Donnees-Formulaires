@@ -25,8 +25,8 @@ const ToastManager = (() => {
   const ICONS = {
     success: '✅',
     warning: '⚠️',
-    error:   '❌',
-    info:    'ℹ️',
+    error: '❌',
+    info: 'ℹ️',
   };
 
   /**
@@ -61,21 +61,21 @@ const ToastManager = (() => {
 const SchemaBuilder = (() => {
   let fieldCounter = 0;
 
-  const fieldsList   = document.getElementById('fields-list');
-  const countBadge   = document.getElementById('field-count-badge');
-  const schemaPreview= document.getElementById('schema-json-output');
+  const fieldsList = document.getElementById('fields-list');
+  const countBadge = document.getElementById('field-count-badge');
+  const schemaPreview = document.getElementById('schema-json-output');
 
   const TYPES = ['string', 'number', 'date', 'boolean'];
 
   /** Retourne le schéma courant sous forme d'objet. */
   function getSchema() {
-    const name        = document.getElementById('schema-name').value.trim();
+    const name = document.getElementById('schema-name').value.trim();
     const description = document.getElementById('schema-desc').value.trim();
 
     const fields = Array.from(fieldsList.querySelectorAll('.field-item')).map(item => ({
-      name:        item.querySelector('.field-name').value.trim(),
-      type:        item.querySelector('.field-type').value,
-      required:    item.querySelector('.field-required').checked,
+      name: item.querySelector('.field-name').value.trim(),
+      type: item.querySelector('.field-type').value,
+      required: item.querySelector('.field-required').checked,
       description: item.querySelector('.field-desc').value.trim(),
     })).filter(f => f.name !== '');   // ignorer les champs sans nom
 
@@ -152,7 +152,7 @@ const SchemaBuilder = (() => {
     fieldCounter = 0;
 
     document.getElementById('schema-name').value = schemaObj.schema_name ?? '';
-    document.getElementById('schema-desc').value = schemaObj.description  ?? '';
+    document.getElementById('schema-desc').value = schemaObj.description ?? '';
 
     (schemaObj.fields ?? []).forEach(f => addField(f));
     updateMeta();
@@ -266,7 +266,54 @@ const ExtractionAPI = (() => {
     }
   }
 
-  return { checkHealth, fetchExampleSchemas, extract };
+  /**
+   * Upload un fichier et récupère le texte extrait.
+   *
+   * Sécurité déléguée au backend :
+   *   - extension whitelist (.pdf, .txt, .json)
+   *   - vérification magic bytes
+   *   - taille max 5 Mo
+   *
+   * @param {File} file
+   * @returns {Promise<{text:string, filename:string, size_ko:number, file_type:string, truncated:boolean}>}
+   */
+  async function uploadFile(file) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000); // 30s max pour l'upload
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        let detail = `Erreur ${res.status}`;
+        try {
+          const errBody = await res.json();
+          detail = errBody.detail ?? detail;
+        } catch { /* corps non-JSON */ }
+        throw new APIError(res.status, detail);
+      }
+
+      return await res.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new APIError(0, 'Upload expiré (>30s). Fichier trop volumineux ?');
+      }
+      if (err instanceof APIError) throw err;
+      throw new APIError(0, 'Problème réseau lors de l\'upload.');
+    }
+  }
+
+  return { checkHealth, fetchExampleSchemas, extract, uploadFile };
 })();
 
 
@@ -285,8 +332,8 @@ class APIError extends Error {
    ================================================================ */
 
 const ResultsRenderer = (() => {
-  const placeholder   = document.getElementById('results-placeholder');
-  const content       = document.getElementById('results-content');
+  const placeholder = document.getElementById('results-placeholder');
+  const content = document.getElementById('results-content');
   const resultActions = document.getElementById('result-actions');
 
   /** Affiche un message d'erreur dans la zone résultats. */
@@ -307,14 +354,14 @@ const ResultsRenderer = (() => {
   /** Retourne la classe CSS de confiance selon le score. */
   function confClass(score) {
     if (score >= 0.75) return 'high';
-    if (score >= 0.4)  return 'medium';
+    if (score >= 0.4) return 'medium';
     return 'low';
   }
 
   /** Retourne la couleur CSS de la confiance. */
   function confColor(score) {
     if (score >= 0.75) return 'var(--success)';
-    if (score >= 0.4)  return 'var(--warning)';
+    if (score >= 0.4) return 'var(--warning)';
     return 'var(--error)';
   }
 
@@ -324,16 +371,16 @@ const ResultsRenderer = (() => {
     content.classList.remove('hidden');
     resultActions.style.display = 'flex';
 
-    const status     = result.status ?? 'warning';
+    const status = result.status ?? 'warning';
     const globalConf = result.validation?.confidence_global ?? 0;
-    const alerts     = result.validation?.alerts ?? [];
-    const data       = result.data ?? {};
+    const alerts = result.validation?.alerts ?? [];
+    const data = result.data ?? {};
 
     // Emoji et label selon status
     const statusMap = {
       success: { icon: '✅', label: 'Extraction réussie', cssClass: 'status-success' },
       warning: { icon: '⚠️', label: 'Extraction partielle', cssClass: 'status-warning' },
-      error:   { icon: '❌', label: 'Extraction échouée', cssClass: 'status-error' },
+      error: { icon: '❌', label: 'Extraction échouée', cssClass: 'status-error' },
     };
     const s = statusMap[status] ?? statusMap['warning'];
 
@@ -353,10 +400,10 @@ const ResultsRenderer = (() => {
 
     // --- Champs ---
     const fieldsHtml = Object.entries(data).map(([fieldName, fieldResult]) => {
-      const pct     = Math.round((fieldResult.confidence ?? 0) * 100);
+      const pct = Math.round((fieldResult.confidence ?? 0) * 100);
       const fStatus = fieldResult.status ?? 'missing';
-      const value   = fieldResult.value;
-      const hint    = fieldResult.source_hint;
+      const value = fieldResult.value;
+      const hint = fieldResult.source_hint;
 
       const valueDisplay = value !== null && value !== undefined
         ? `<span>${escapeHtml(String(value))}</span>`
@@ -433,9 +480,9 @@ function escapeHtml(str) {
 /** Déclenche le téléchargement d'un blob JSON. */
 function downloadJson(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
@@ -450,19 +497,27 @@ function downloadJson(data, filename) {
 
 const App = (() => {
   let lastResult = null;   // Garde le dernier ExtractionResult pour l'export
+  let activeSampleDocument = null; // Sample document du preset courant
 
-  const btnExtract    = document.getElementById('btn-extract');
-  const btnAddField   = document.getElementById('btn-add-field');
-  const btnClearSchema= document.getElementById('btn-clear-schema');
-  const btnClearDoc   = document.getElementById('btn-clear-doc');
+  const btnExtract = document.getElementById('btn-extract');
+  const btnAddField = document.getElementById('btn-add-field');
+  const btnClearSchema = document.getElementById('btn-clear-schema');
+  const btnClearDoc = document.getElementById('btn-clear-doc');
   const btnLoadSample = document.getElementById('btn-load-sample');
   const btnExportJson = document.getElementById('btn-export-json');
-  const docInput      = document.getElementById('document-input');
-  const charCount     = document.getElementById('doc-char-count');
+  const docInput = document.getElementById('document-input');
+  const charCount = document.getElementById('doc-char-count');
   const schemaPresets = document.getElementById('schema-presets');
   const previewToggle = document.getElementById('toggle-schema-preview');
-  const previewJson   = document.getElementById('schema-json-output');
-  const apiStatusBadge= document.getElementById('api-status-badge');
+  const previewJson = document.getElementById('schema-json-output');
+  const apiStatusBadge = document.getElementById('api-status-badge');
+  const uploadZone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  const uploadZoneContent = document.getElementById('upload-zone-content');
+  const uploadFileInfo = document.getElementById('upload-file-info');
+  const uploadFileName = document.getElementById('upload-file-name');
+  const uploadFileSize = document.getElementById('upload-file-size');
+  const btnRemoveFile = document.getElementById('btn-remove-file');
 
   // Texte de facture exemple (embarqué, pas besoin de fetch)
   const SAMPLE_DOCUMENT = `FACTURE
@@ -489,7 +544,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
 
   /** Met à jour l'état du bouton Extract selon les saisies. */
   function updateExtractButton() {
-    const hasDoc    = docInput.value.trim().length > 0;
+    const hasDoc = docInput.value.trim().length > 0;
     const hasFields = SchemaBuilder.getSchema().fields.length > 0;
     btnExtract.disabled = !(hasDoc && hasFields);
   }
@@ -504,7 +559,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
   /** Lance l'extraction. */
   async function handleExtract() {
     const documentText = docInput.value.trim();
-    const schema       = SchemaBuilder.getSchema();
+    const schema = SchemaBuilder.getSchema();
 
     // Validations front-end rapides (doublonnent la validation backend pour UX)
     if (!documentText) {
@@ -565,6 +620,7 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     examples.forEach(ex => {
       const opt = document.createElement('option');
       opt.value = JSON.stringify(ex.schema);
+      opt.dataset.sample = ex.sample_document || '';
       opt.textContent = ex.name;
       schemaPresets.appendChild(opt);
     });
@@ -587,12 +643,16 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
       updateExtractButton();
     });
 
-    // Charger document exemple
+    // Charger document exemple — utilise le sample du preset actif si disponible
     btnLoadSample.addEventListener('click', () => {
-      docInput.value = SAMPLE_DOCUMENT;
-      charCount.textContent = `${SAMPLE_DOCUMENT.length} caractères`;
+      const doc = activeSampleDocument || SAMPLE_DOCUMENT;
+      docInput.value = doc;
+      charCount.textContent = `${doc.length.toLocaleString('fr-FR')} caractère${doc.length > 1 ? 's' : ''}`;
       updateExtractButton();
-      ToastManager.show('info', 'Document exemple chargé', 'Facture fictive DataForm SAS.');
+      const label = activeSampleDocument
+        ? `Document exemple pour le schéma actif.`
+        : 'Facture fictive DataForm SAS.';
+      ToastManager.show('info', 'Document exemple chargé', label);
     });
 
     // Extraction
@@ -624,10 +684,23 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     schemaPresets.addEventListener('change', () => {
       const val = schemaPresets.value;
       if (!val) return;
+      // Récupère le sample document stocké dans data-sample
+      const selectedOpt = schemaPresets.options[schemaPresets.selectedIndex];
+      const sampleDoc = selectedOpt?.dataset?.sample || '';
       try {
         const schemaObj = JSON.parse(val);
         SchemaBuilder.loadSchema(schemaObj);
-        ToastManager.show('info', 'Schéma chargé', schemaObj.schema_name);
+        // Mémoriser le sample pour le bouton Exemple
+        activeSampleDocument = sampleDoc || null;
+        // Auto-charger le document exemple si un est disponible
+        if (sampleDoc) {
+          docInput.value = sampleDoc;
+          charCount.textContent = `${sampleDoc.length.toLocaleString('fr-FR')} caractère${sampleDoc.length > 1 ? 's' : ''}`;
+          updateExtractButton();
+          ToastManager.show('info', 'Schéma + exemple chargés', schemaObj.schema_name);
+        } else {
+          ToastManager.show('info', 'Schéma chargé', schemaObj.schema_name);
+        }
       } catch {
         ToastManager.show('error', 'Erreur', 'Impossible de charger ce schéma.');
       }
@@ -642,14 +715,138 @@ IBAN: FR76 3000 6000 0112 3456 7890 189`;
     });
   }
 
+  /** Initialise la zone drag-and-drop et l'input fichier. */
+  function initUploadZone() {
+    // Clic sur la zone → ouvre le sélecteur de fichier
+    uploadZone.addEventListener('click', e => {
+      if (e.target === btnRemoveFile) return; // Évite le re-trigger sur le bouton ✕
+      fileInput.click();
+    });
+
+    // Sélection via l'input fichier
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files?.[0]) handleFileUpload(fileInput.files[0]);
+    });
+
+    // Drag events
+    uploadZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+    uploadZone.addEventListener('dragleave', e => {
+      if (!uploadZone.contains(e.relatedTarget)) uploadZone.classList.remove('drag-over');
+    });
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) handleFileUpload(file);
+    });
+
+    // Retirer le fichier
+    btnRemoveFile.addEventListener('click', e => {
+      e.stopPropagation();
+      clearUploadedFile();
+    });
+
+    // Accessibilité clavier (Entrée / Espace)
+    uploadZone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+  }
+
+  /** Gère l'upload d'un fichier sélectionné. */
+  async function handleFileUpload(file) {
+    // Validation légère côté client (extension) — le backend refait la vraie validation
+    const allowed = ['.pdf', '.txt', '.json'];
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowed.includes(ext)) {
+      ToastManager.show('error', 'Format non supporté',
+        `Extension « ${ext} » refusée. Utilisez : PDF, TXT ou JSON.`);
+      return;
+    }
+
+    // Vérification taille côté client (5 Mo)
+    if (file.size > 5 * 1024 * 1024) {
+      ToastManager.show('error', 'Fichier trop volumineux',
+        `${(file.size / (1024 * 1024)).toFixed(1)} Mo — maximum : 5 Mo.`);
+      return;
+    }
+
+    // UI : état chargement
+    uploadZone.classList.add('upload-processing');
+    uploadZoneContent.innerHTML = `
+      <div class="upload-zone-content">
+        <div class="spinner" style="border-top-color: var(--accent-1)"></div>
+        <p class="upload-label">Extraction du texte en cours…</p>
+      </div>`;
+
+    try {
+      const result = await ExtractionAPI.uploadFile(file);
+
+      // Peupler le textarea
+      docInput.value = result.text;
+      const len = result.text.length;
+      charCount.textContent = `${len.toLocaleString('fr-FR')} caractère${len > 1 ? 's' : ''}`;
+      updateExtractButton();
+
+      // Afficher infos fichier
+      uploadZoneContent.classList.add('hidden');
+      uploadFileInfo.classList.remove('hidden');
+      uploadFileName.textContent = result.filename;
+      uploadFileSize.textContent = `${result.size_ko} Ko`;
+
+      // Badge troncature
+      const existing = uploadFileInfo.querySelector('.upload-truncated-badge');
+      if (existing) existing.remove();
+      if (result.truncated) {
+        const badge = document.createElement('span');
+        badge.className = 'upload-truncated-badge';
+        badge.title = 'Texte tronqué à 50 000 caractères pour limiter les tokens LLM';
+        badge.textContent = 'Tronqué';
+        uploadFileSize.after(badge);
+        ToastManager.show('warning', 'Texte tronqué',
+          'Le document dépasse 50 000 caractères — il a été tronqué pour le LLM.');
+      } else {
+        ToastManager.show('success', 'Fichier importé', `${result.filename} · ${result.char_count.toLocaleString('fr-FR')} caractères extraits.`);
+      }
+
+    } catch (err) {
+      const msg = err instanceof APIError ? err.detail : String(err);
+      ToastManager.show('error', 'Erreur d\'import', msg, 7000);
+      clearUploadedFile();
+    } finally {
+      uploadZone.classList.remove('upload-processing');
+    }
+  }
+
+  /** Remet la zone upload dans son état initial. */
+  function clearUploadedFile() {
+    fileInput.value = '';
+    uploadZoneContent.innerHTML = `
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+      </svg>
+      <p class="upload-label">Glissez un fichier ici ou <span class="upload-browse">parcourez</span></p>
+      <p class="upload-hint">PDF océrisé, TXT, JSON &nbsp;·&nbsp; 5 Mo max</p>`;
+    uploadZoneContent.classList.remove('hidden');
+    uploadFileInfo.classList.add('hidden');
+    const badge = uploadFileInfo.querySelector('.upload-truncated-badge');
+    if (badge) badge.remove();
+  }
+
   /** Point d'entrée. */
   async function init() {
     bindEvents();
+    initUploadZone();
 
     // Schéma par défaut : 1 champ exemple pour guider l'utilisateur
     SchemaBuilder.addField({ name: 'numero_facture', type: 'string', required: true, description: 'Identifiant unique de la facture' });
-    SchemaBuilder.addField({ name: 'date_facture',   type: 'date',   required: true, description: 'Date au format YYYY-MM-DD' });
-    SchemaBuilder.addField({ name: 'montant_total',  type: 'number', required: true, description: 'Montant TTC total' });
+    SchemaBuilder.addField({ name: 'date_facture', type: 'date', required: true, description: 'Date au format YYYY-MM-DD' });
+    SchemaBuilder.addField({ name: 'montant_total', type: 'number', required: true, description: 'Montant TTC total' });
 
     updateExtractButton();
 

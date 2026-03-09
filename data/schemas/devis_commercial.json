@@ -1,0 +1,67 @@
+{
+    "schema_name": "devis_commercial",
+    "description": "Extraction des informations d'un devis commercial ou offre de prix.",
+    "fields": [
+        {
+            "name": "numero_devis",
+            "type": "string",
+            "required": true,
+            "description": "Référence unique du devis"
+        },
+        {
+            "name": "date_devis",
+            "type": "date",
+            "required": true,
+            "description": "Date d'émission du devis au format YYYY-MM-DD"
+        },
+        {
+            "name": "date_validite",
+            "type": "date",
+            "required": false,
+            "description": "Date de validité du devis au format YYYY-MM-DD"
+        },
+        {
+            "name": "nom_prestataire",
+            "type": "string",
+            "required": true,
+            "description": "Nom ou raison sociale du prestataire"
+        },
+        {
+            "name": "nom_client",
+            "type": "string",
+            "required": true,
+            "description": "Nom ou raison sociale du client"
+        },
+        {
+            "name": "description_prestation",
+            "type": "string",
+            "required": true,
+            "description": "Description de la prestation ou des produits proposés"
+        },
+        {
+            "name": "montant_ht",
+            "type": "number",
+            "required": true,
+            "description": "Montant total hors taxes en euros"
+        },
+        {
+            "name": "taux_tva",
+            "type": "number",
+            "required": false,
+            "description": "Taux de TVA applicable en pourcentage"
+        },
+        {
+            "name": "montant_ttc",
+            "type": "number",
+            "required": true,
+            "description": "Montant total TTC en euros"
+        },
+        {
+            "name": "conditions_paiement",
+            "type": "string",
+            "required": false,
+            "description": "Conditions de paiement (ex: 30 jours, acompte 30%)"
+        }
+    ],
+    "sample_document": "DEVIS N° DEV-2026-0054\n\nDate d'émission : 2026-03-08\nValidité de l'offre : jusqu'au 2026-04-08\n\nPRESTATAIRE :\nAgenceWeb Studio\n18 rue des Entrepreneurs, 75015 Paris\nSIRET : 789 012 345 00018\nContact : contact@agenceweb-studio.fr\n\nCLIENT :\nBoulangerie Artisanale Moreau\n3 place de l'Église, 37000 Tours\nM. François Moreau\n\nOBJET : Création d'un site vitrine + boutique en ligne\n\nDÉTAIL DES PRESTATIONS :\n\n1. Conception graphique (maquettes UI/UX)       800,00 EUR HT\n2. Développement site vitrine (5 pages)        1 200,00 EUR HT\n3. Module boutique e-commerce (WooCommerce)    1 500,00 EUR HT\n4. Intégration contenu et formation (2h)         300,00 EUR HT\n5. Hébergement + nom de domaine (1 an)           200,00 EUR HT\n\nTOTAL HT :                4 000,00 EUR\nTVA (20 %) :                800,00 EUR\nTOTAL TTC :               4 800,00 EUR\n\nCONDITIONS DE PAIEMENT :\n  - Acompte de 30 % à la commande : 1 440,00 EUR TTC\n  - Solde à la livraison du site : 3 360,00 EUR TTC\n  - Paiement par virement bancaire\n\nDélai de réalisation estimé : 6 semaines après réception de l'acompte.\n\nDevis accepté le : ________________\nSignature client : ________________"
+}
