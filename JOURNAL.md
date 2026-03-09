@@ -213,3 +213,129 @@ Tests à écrire (sans appel réel à l'API, utilise unittest.mock) :
 **Solution trouvée** : Mise en place d'une suite de tests unitaires utilisant `unittest.mock` pour injecter des réponses JSON variées (valides, corrompues, incomplètes) et vérifier que le système réagit conformément au cahier des charges sans interrompre l'exécution.
 
 **Apprentissage clé** : Tester les "mauvais cas" est aussi important que le "happy path". Cela m'a permis de renforcer la gestion d'erreurs dans `extractor.py` et `validator.py` pour garantir la stabilité du MVP.
+
+## Session 3 (09 Mars 2026)
+
+**Objectif de la session** : Construire une interface web complète permettant d'utiliser l'extracteur sans ligne de commande, en passant par un backend FastAPI et un frontend HTML/CSS/JS riche. L'objectif est de rendre le MVP véritablement utilisable par n'importe qui, et non plus réservé aux développeurs CLI.
+
+---
+
+### Étape 1 : Design de l'architecture backend
+
+**Prompt utilisé** :
+```
+Contexte : J'ai un extracteur Python existant (extractor.py, validator.py, models.py) dans src/.
+Exigence : Crée src/backend/api.py avec FastAPI.
+Architecture :
+  - POST /api/extract → reçoit {document_text, schema}, appelle extract() puis validate_extraction(), retourne ExtractionResult en JSON
+  - GET /api/health → healthcheck
+  - GET /api/schemas/examples → charge les .json dans src/schemas/ et les retourne
+  - CORS configuré pour le développement local
+  - Montage des fichiers statiques du dossier src/frontend/ sur /static
+  - Servir index.html sur GET /
+Cas limites à gérer :
+  - Document vide → HTTPException 422 avec message clair
+  - Schéma sans champs → HTTPException 422 avec message clair
+  - Clé API manquante → HTTPException 503 (service unavailable)
+  - Timeout ou erreur réseau → HTTPException 503
+  - Erreur inattendue → HTTPException 500
+Nommage : snake_case pour Python, camelCase pour JS.
+```
+
+**Résultat** : L'API générée est propre, modulaire. Chaque endpoint est isolé, les erreurs HTTP sont sémantiquement correctes (422 pour erreur utilisateur, 503 pour service tiers, 500 pour l'inattendu).
+
+**Décision d'architecture** : Plutôt que de créer une couche "service" intermédiaire, j'ai choisi d'importer directement `extractor.py` et `validator.py` dans l'API via un ajustement du `sys.path`. 
+
+- **Pourquoi** : Éviter de dupliquer la logique métier ou de refactoriser les modules existants — ils fonctionnent déjà bien. La contrainte de temps ne justifie pas une refactorisation en package complet.
+- **Compromis** : Le `sys.path.insert(0, ...)` est une solution pragmatique acceptable pour un MVP, mais fragile si le projet grandit. En v2, il faudrait structurer le projet comme un vrai package Python avec `pip install -e .`.
+
+---
+
+### Étape 2 : Frontend — Schema Builder dynamique
+
+**Prompt utilisé** :
+```
+Crée src/frontend/app.js en JS vanilla.
+Architecture modulaire avec 4 modules :
+  - ToastManager : notifications visuelles non-bloquantes (success/warning/error/info)
+  - SchemaBuilder : gestion dynamique des champs (addField, loadSchema, clearSchema, getSchema)
+  - ExtractionAPI : fetch POST /api/extract avec timeout 60s, gestion erreur réseau, APIError custom
+  - ResultsRenderer : render(result) → barres de confiance colorées, status chips, alertes
+  - App : orchestrateur, binds tous les event listeners
+Cas limites à gérer côté JS :
+  - Bouton Extract désactivé si document vide ou schéma sans champ
+  - Timeout API → AbortController après 60s
+  - Erreur réseau → message explicite "impossible de joindre le serveur"
+  - Export JSON → Blob + URL.createObjectURL + cleanup
+  - Raccourci Ctrl+Enter pour déclencher l'extraction
+```
+
+**Problème rencontré** : Le `AbortController` de fetch ne gère pas les timeouts nativement avant l'API expérimentale `AbortSignal.timeout()`. Il fallait combiner `setTimeout` + `controller.abort()` pour garantir compatibilité.
+
+**Solution** : Utilisation d'un `AbortController` manuel avec `clearTimeout` dans le `finally`, ce qui couvre tous les cas (timeout, succès, erreur HTTP) sans fuite de timer.
+
+---
+
+### Étape 3 : Frontend — CSS Premium
+
+**Prompt utilisé** :
+```
+Crée src/frontend/style.css.
+Design : dark mode, glassmorphism (backdrop-filter: blur), gradient accent indigo→violet.
+Composants à styler :
+  - Header sticky avec badge de statut API animé (pulse-dot)
+  - Hero avec gradient text
+  - Workspace 3 colonnes responsive (grid-template-columns: 340px 1fr 380px)
+  - Barres de confiance animées (transition width 0.6s cubic-bezier)
+  - Status chips (found/missing/uncertain) avec couleurs sémantiques
+  - Toasts avec slide-in + fade-out automatique
+  - Spinner pour l'état loading
+Police : Inter (Google Fonts) + JetBrains Mono pour le code.
+```
+
+**Problème rencontré** : Le linter CSS a signalé que `-webkit-background-clip: text` doit être accompagné de la propriété standard `background-clip: text` pour la compatibilité cross-browser.
+
+**Solution** : Ajout de `background-clip: text` et `color: transparent` en parallèle du `-webkit-text-fill-color: transparent` sur les deux sélecteurs `.logo-accent` et `.gradient-text`.
+
+**Apprentissage clé** : Les préfixes webkit ne sont plus suffisants seuls — les standards modernes exigent les deux versions pour une compatibilité Chrome/Firefox/Safari.
+
+---
+
+### Étape 4 : Mise à jour des dépendances
+
+`requirements.txt` mis à jour avec :
+```
+fastapi
+uvicorn[standard]
+python-multipart
+```
+
+- **FastAPI** : choix naturel, natif Pydantic, génère Swagger auto sur `/docs`, async possible.
+- **uvicorn[standard]** : serveur ASGI haute performance, `[standard]` inclut `websockets` et `watchfiles` pour le `--reload` en dev.
+- **python-multipart** : requis par FastAPI pour le parsing des `form-data` (même si on n'utilise pas encore d'upload, c'est préventif pour la v2 avec upload de PDF).
+
+---
+
+### Cas limites traités dans cette session
+
+| Cas limite | Où géré | Comment |
+|---|---|---|
+| Document vide | Backend (422) + Frontend (bouton désactivé) | Double barrière UX + API |
+| Schéma sans champs | Backend (422) + Frontend (bouton désactivé) | Double barrière UX + API |
+| Clé API absente | Backend (503) | Détection du `ValueError` de `_load_client()` |
+| Timeout >60s | Frontend (AbortController) | Abort + message explicite |
+| Erreur réseau | Frontend (try/catch) | Toast "impossible de joindre le serveur" |
+| JSON invalide du schéma | Backend (422) | `model_validate()` Pydantic |
+| Réponse API `status: error` | Frontend (ResultsRenderer) | Affichage rouge + alerte |
+
+---
+
+### Ce que j'ai appris
+
+1. **FastAPI + `sys.path`** : Pour intégrer rapidement un module Python existant sans le transformer en package, `sys.path.insert(0, str(SRC_DIR))` est une solution valide pour un MVP mais à éviter en production. La vraie solution est un package installable (`pyproject.toml`).
+
+2. **JS vanilla > framework pour les SPAs légères** : Sans état complexe partagé entre composants, le découpage en modules IIFE (Immediately Invoked Function Expression) avec `return` de l'API publique remplace avantageusement React pour une app aussi ciblée. Zéro dépendance, zéro bundle.
+
+3. **AbortController + clearTimeout** : Il faut toujours `clearTimeout` dans un `finally` pour éviter des appels résiduels après que la promesse ait résolu ou rejeté.
+
+4. **La double barrière UX** : Valider côté frontend (bouton désactivé) ET côté backend (HTTP 422) n'est pas une duplication — c'est une défense en profondeur. Le frontend améliore l'UX (pas d'attente inutile), le backend protège l'API des appels directs (curl, Postman, autres clients).
