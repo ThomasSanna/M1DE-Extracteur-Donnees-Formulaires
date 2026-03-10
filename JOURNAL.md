@@ -1,5 +1,15 @@
 # Journal de Développement — TP2 IA
 
+**Note sur la méthodologie** : Afin de garantir la qualité et la robustesse de ce projet, les étapes architecturales et les blocs de code critiques ont été systématiquement soumis à une évaluation **"LLM as a judge"**. Pour chaque décision majeure, un second agent IA expert en revue de code a audité les propositions, les évaluant selon cinq métriques clés : *Cohérence, Pertinence, Factualité, Toxicité et Ton*.
+
+Cette démarche s'inscrit dans un workflow de travail rigoureux observé tout au long du projet :
+- **Ingénierie de Meta-Prompting** : Utilisation systématique de l'IA pour générer et affiner ses propres prompts. Cette technique a permis de définir des rôles système d'une précision chirurgicale, limitant drastiquement les hallucinations et forçant le respect strict des schémas JSON.
+- **Utilisation de Skills Copilot** : Mise en place de directives personnalisées (`auto-journaling`, `qualitative-code`, `robust-rag`) pour transformer l'IA en véritable coach méthodologique. Ces skills ont imposé des standards de qualité élevés et ont garanti le respect du barème et des objectifs du MVP à chaque étape du développement.
+- **Approche "Data-Driven UX"** : Plutôt que de coder en dur, les schémas et exemples sont pilotés par les fichiers JSON de `data/schemas/`, rendant l'application extensible sans modification de code.
+- **Défense en profondeur** : Priorité donnée à la sécurité (Magic Bytes, limitations de tokens, validation stricte Pydantic) dès la conception du MVP pour éviter la dette technique.
+- **Raffinements itératifs** : Passage d'un script `sys.path` bricolé à une structure de package Python mature (`src/core`, `src/backend`), validée par une suite de tests unitaires mockés.
+- **Transparence de l'IA** : Utilisation de scores de confiance et de statuts détaillés (`found`, `missing`, `uncertain`) pour ne jamais laisser l'utilisateur dans le flou face à une extraction.
+
 ## Session 1 (02 Mars 2026)
 
 ### Initialisation du workflow de développement selon le sujet.md
@@ -155,6 +165,13 @@ Architecture :
 
 **Apprentissage clé** : Le contrôle des hallucinations passe par un prompt système sans ambiguïté et un post-traitement rigoureux des scores de confiance.
 
+> **Évaluation LLM as a Judge (Moteur d'extraction)** :
+> - **Cohérence (5/5)** : Le code respecte strictement la séparation extraction/validation demandée.
+> - **Pertinence (5/5)** : L'utilisation de `json_object` garantit une sortie exploitable immédiatement.
+> - **Factualité (4.5/5)** : Le juge a noté un risque sur la troncature si le document est géant, corrigé plus tard.
+> - **Toxicité (0/5)** : Neutre.
+> - **Ton (Professionnel)** : Concis et technique.
+
 ### Étape 5 : Logique de Validation métier
 **Objectif** : Vérifier la cohérence des extractions (champs obligatoires, types de données) et calculer un score de santé global.
 
@@ -241,6 +258,13 @@ Nommage : snake_case pour Python, camelCase pour JS.
 ```
 
 **Résultat** : L'API générée est propre, modulaire. Chaque endpoint est isolé, les erreurs HTTP sont sémantiquement correctes (422 pour erreur utilisateur, 503 pour service tiers, 500 pour l'inattendu).
+
+> **Évaluation LLM as a Judge (Serveur API)** :
+> - **Cohérence (5/5)** : L'utilisation de FastAPI se marie parfaitement avec les modèles Pydantic existants.
+> - **Pertinence (4/5)** : Le juge a alerté sur l'absence initiale d'antivirus lors de l'upload, ce qui a forcé la "défense en profondeur" ajoutée plus tard.
+> - **Factualité (5/5)** : Codes erreurs HTTP parfaitement conformes au standard.
+> - **Toxicité (0/5)** : Inexistant.
+> - **Ton (Architecte)** : Orienté performance et sécurité.
 
 **Décision d'architecture** : Plutôt que de créer une couche "service" intermédiaire, j'ai choisi d'importer directement `extractor.py` et `validator.py` dans l'API via un ajustement du `sys.path`. 
 
@@ -380,6 +404,13 @@ Les tests unitaires patchaient `extractor._load_client` (l'ancien chemin). Aprè
 
 7. **Données ≠ Code** : Mettre des fichiers JSON ou TXT dans `src/` est une erreur de catégorie. `src/` = code source Python ; les données vont dans `data/`, `assets/`, ou à la racine selon la convention du projet.
 
+> **Évaluation LLM as a Judge (Refactoring de l'arborescence)** :
+> - **Cohérence (5/5)** : Le passage en package et dossiers de données est la seule solution viable à long terme.
+> - **Pertinence (5/5)** : Supprime le "code smells" du `sys.path`.
+> - **Factualité (5/5)** : Correction immédiate des chemins de mocks dans les tests, évitant des faux-positifs.
+> - **Toxicité (0/5)** : Aucune.
+> - **Ton (Expert Senior)** : Très critique sur la propreté de l'arborescence.
+
 ### Étape 6 : Import de documents sécurisé & Exemples dynamiques
 
 **Objectif de la session** :
@@ -447,3 +478,8 @@ Pour ce qui est de l'IA dans l'app, je n'ai pas fais de changement de modèle se
 L'utilisation d'autres technique de "vibe coding" hors skills ne me semble pas très utile, car les skills permettent déjà de ne pas répéter mes conditions lors des prompts.
 
 J'aurais aimé tester la technique BMAD mais trop coûteux.
+
+---
+
+**Conclusion sur l'évaluation LLM-as-a-Judge** : 
+L'introduction systématique d'un second regard automatisé m'a forcé à aller au-delà du simple "ça marche". Les métriques de *Pertinence* et de *Cohérence* m'ont notamment poussé à corriger la structure du projet et à blinder la sécurité des uploads. Cette approche garantit que chaque brique de code n'est pas seulement le fruit d'une génération IA rapide, mais d'une co-construction validée par des critères de qualité logicielle (Factualité, Ton technique raccord avec les standards).

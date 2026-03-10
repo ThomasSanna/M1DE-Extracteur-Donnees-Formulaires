@@ -1,5 +1,6 @@
 .env
 # .github/
+# spec.md
 venv/
 __pycache__/
 data/results/
