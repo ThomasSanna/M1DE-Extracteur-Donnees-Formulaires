@@ -484,12 +484,33 @@ J'aurais aimé tester la technique BMAD mais trop coûteux.
 **Conclusion sur l'évaluation LLM-as-a-Judge** : 
 L'introduction systématique d'un second regard automatisé m'a forcé à aller au-delà du simple "ça marche". Les métriques de *Pertinence* et de *Cohérence* m'ont notamment poussé à corriger la structure du projet et à blinder la sécurité des uploads. Cette approche garantit que chaque brique de code n'est pas seulement le fruit d'une génération IA rapide, mais d'une co-construction validée par des critères de qualité logicielle (Factualité, Ton technique raccord avec les standards).
 
-## Session 4 (10 Mars 2026) : Mise en place d'un serveur 
+## Session 4 (10 Mars 2026) : Implémentation d'un serveur MCP (Model Context Protocol)
 
-### Etape 1 : Approfondissement du sujet et définition des objectifs
+**Objectif de la session** : Désenclaver l'API FormAI pour la rendre invocable nativement par n'importe quel Agent IA (Claude Desktop, Cursor, Antigravity) via le standard MCP, transformant ainsi l'application en un outil autonome ("Tool") pour les LLMs.
 
-Prompt utilisé : 
-```
+### Étape 1 : Cadrage et défi d'architecture
+
+**Prompt utilisé** : 
+
+```text
 Mon but à présent, dans mon projet, est d'y créer un serveur MCP. Or je ne my connais pas vraiment. Demande moi sous PRD, donne moi des plans de solutions, ce qui serait cool à faire, .... Challenge moi en gros
 ```
+
+**Problème rencontré** : Comprendre le positionnement architecturel d'un serveur MCP par rapport à une API REST classique. L'API REST demande au client IA de savoir formuler des requêtes HTTP (avec risque d'hallucination des routes).
+**Solution trouvée** : Choix du **Plan A (Serveur Standalone en STDIO)** utilisant le SDK `mcp` et `FastMCP`. Ce mode permet au client IA de lancer le serveur comme sous-processus, d'y découvrir automatiquement les outils (`tools`) via leurs docstrings, et de s'abstraire totalement de la couche réseau.
+
+### Étape 2 : Implémentation et extension des capacités de l'Agent
+
+**Prompt utilisé** :
+
+```text
+donc l0 si je veux utiliser l'agent sur antigravity en lui disant "dans data/samples, prends tous les cv pour les extraires", il saura faire ? Et en conséquence, tu sauras faire ?
+```
+
+**Problème rencontré** : Une fois le tool `extract_from_text` créé, je me suis rendu compte qu'un agent externe (comme Claude Desktop) restait "aveugle". Il ne pouvait pas aller chercher lui-même un fichier sur mon disque dur, m'obligeant à copier-coller le contenu du CV manuellement ou à écrire un script Python intermédiaire.
+**Solution trouvée** : Implémentation d'un outil avancé `extract_from_file(file_path: str)`. Cet outil donne littéralement "des yeux" et un accès fichier (Read-only) à l'agent MCP. Il détermine l'extension, extrait le texte (via `pypdf` ou décodage UTF-8) et le passe à l'extracteur IA.
+**Vérification** : Succès total testé avec l'outil web `npx @modelcontextprotocol/inspector` puis en branchant directement l'IDE via le fichier `mcp_config.json`.
+
+**Apprentissage clé** : 
+Le Model Context Protocol est l'équivalent d'un port "USB-C" pour l'Intelligence Artificielle. Créer un serveur MCP change totalement le paradigme de développement : on ne construit plus des interfaces utilisateurs, on construit des "bras robotisés" (Tools) que les IA vont pouvoir découvrir, comprendre via leurs descriptions, et utiliser de manière totalement autonome pour accomplir des tâches complexes sur notre machine locale.
 
