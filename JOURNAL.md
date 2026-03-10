@@ -483,3 +483,13 @@ J'aurais aimé tester la technique BMAD mais trop coûteux.
 
 **Conclusion sur l'évaluation LLM-as-a-Judge** : 
 L'introduction systématique d'un second regard automatisé m'a forcé à aller au-delà du simple "ça marche". Les métriques de *Pertinence* et de *Cohérence* m'ont notamment poussé à corriger la structure du projet et à blinder la sécurité des uploads. Cette approche garantit que chaque brique de code n'est pas seulement le fruit d'une génération IA rapide, mais d'une co-construction validée par des critères de qualité logicielle (Factualité, Ton technique raccord avec les standards).
+
+## Session 4 (10 Mars 2026) : Mise en place d'un serveur 
+
+### Etape 1 : Approfondissement du sujet et définition des objectifs
+
+Prompt utilisé : 
+```
+Mon but à présent, dans mon projet, est d'y créer un serveur MCP. Or je ne my connais pas vraiment. Demande moi sous PRD, donne moi des plans de solutions, ce qui serait cool à faire, .... Challenge moi en gros
+```
+
